@@ -4,7 +4,6 @@ composer.lock
 wp-tests-config.php
 .idea/
 node_modules/
-package-lock.json
 .DS_Store
 .auth/
 playwright-report/
