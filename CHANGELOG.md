@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-05
+
+### Added
+
+- Codecov configuration (`codecov.yml`) for derived projects
+- Graceful admin notice when `vendor/autoload.php` is missing
+- Post-setup reminder for `CODECOV_TOKEN` in `setup.sh` and `CLAUDE.md`
+- `package-lock.json` committed for reliable E2E CI runs
+
+### Fixed
+
+- PHPCS scanning `.ddev/` directory causing hangs
+- Pre-commit hook passing staged file paths to PHPStan
+- `CHANGELOG.md` template entries persisting into derived projects
+
 ## [0.4.0] - 2026-03-15
 
 ### Added
@@ -59,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Workflow callers missing permissions (caused startup_failure)
 
+[0.5.0]: https://github.com/apermo/template-wordpress/compare/v0.4.1...v0.5.0
 [0.4.0]: https://github.com/apermo/template-wordpress/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/apermo/template-wordpress/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/apermo/template-wordpress/compare/v0.1.0...v0.2.0
