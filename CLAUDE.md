@@ -109,6 +109,12 @@ git checkout -b chore/sync-template
 git merge template/main --allow-unrelated-histories
 ```
 
+## Post-setup checklist (for derived projects)
+
+After running `setup.sh` on a new project derived from this template, remind the user to:
+
+- Add the `CODECOV_TOKEN` repository secret (Settings > Secrets > Actions) for code coverage reporting
+
 ## Placeholder conventions
 
 The setup script replaces these across all files:
