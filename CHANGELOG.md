@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - DDEV docroot moved to `.ddev/wordpress/` subdirectory to keep project root clean
-- Remove `docker-compose.plugin.yaml.dist` and `docker-compose.theme.yaml.dist` mount files
+- Removed `docker-compose.plugin.yaml.dist` and `docker-compose.theme.yaml.dist` mount files
 
 ### Fixed
 
