@@ -194,7 +194,7 @@ if command -v gh &>/dev/null; then
             gh label create "dependencies"     --color "0366D6" --description "Dependency updates" --repo "$OWNER_REPO" 2>/dev/null || true
 
             info "Creating branch ruleset..."
-            REQUIRED_CHECKS='[{"context":"Check CHANGELOG Entry"},{"context":"Check Commit Message Format"},{"context":"PHPStan"},{"context":"Coding Standards"}]'
+            REQUIRED_CHECKS='[{"context":"pr-validation / Check CHANGELOG Entry"},{"context":"conventional-commits / Check Commit Message Format"},{"context":"ci / PHPStan"},{"context":"ci / Coding Standards"}]'
 
             gh api "repos/${OWNER_REPO}/rulesets" --method POST --input - <<RULESET_EOF || warn "Could not create ruleset."
 {
