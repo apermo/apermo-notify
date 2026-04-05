@@ -123,9 +123,6 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
     rm -f src/Theme.php
     rm -rf templates/ parts/ assets/
 
-    # Activate plugin docker-compose mount
-    cp .ddev/docker-compose.plugin.yaml.dist .ddev/docker-compose.mount.yaml
-
     # Clean phpstan.neon.dist
     sedi '/- functions.php/d' phpstan.neon.dist
 else
@@ -133,9 +130,6 @@ else
     rm -f plugin.php uninstall.php
     rm -f src/Plugin.php
     rm -f tests/Unit/PluginTest.php
-
-    # Activate theme docker-compose mount
-    cp .ddev/docker-compose.theme.yaml.dist .ddev/docker-compose.mount.yaml
 
     # Update composer.json type
     sedi 's|"wordpress-plugin"|"wordpress-theme"|' composer.json
@@ -151,10 +145,6 @@ else
     sedi 's|A WordPress plugin|A WordPress block theme|g' readme.txt
     sedi "s|/wp-content/plugins/${SLUG}/|/wp-content/themes/${SLUG}/|" readme.txt
 fi
-
-# Remove both dist files
-rm -f .ddev/docker-compose.plugin.yaml.dist
-rm -f .ddev/docker-compose.theme.yaml.dist
 
 # --- WordPress.org publishing ---
 
