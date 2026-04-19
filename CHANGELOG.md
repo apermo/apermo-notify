@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sample spec. E2E workflow now passes `a11y: true` to the reusable workflow.
 - Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
   `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
-- Plugin mode: [`wordpress/plugin-check-action`](https://github.com/WordPress/plugin-check-action)
-  workflow enforcing WP.org directory policy. Kept only when WP.org publishing
-  is enabled during `setup.sh`; removed in theme mode or when opting out of WP.org.
+- Plugin mode: Plugin Check workflow calling
+  [`apermo/reusable-workflows/reusable-plugin-check.yml`](https://github.com/apermo/reusable-workflows/releases/tag/v0.5.0)
+  (wraps [`wordpress/plugin-check-action`](https://github.com/WordPress/plugin-check-action))
+  to enforce WP.org directory policy. Kept only when WP.org publishing is
+  enabled during `setup.sh`; removed in theme mode or when opting out of WP.org.
 
 ### Changed
 

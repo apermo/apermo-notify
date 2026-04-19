@@ -16,11 +16,4 @@ jobs:
         # dual plugin/theme layout all violate directory policy. Derived projects
         # (different repo slug) will run it normally.
         if: github.repository != 'apermo/template-wordpress'
-        name: Run WordPress Plugin Check
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: wordpress/plugin-check-action@v1
-              with:
-                  wp-version: latest
+        uses: apermo/reusable-workflows/.github/workflows/reusable-plugin-check.yml@main
