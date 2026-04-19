@@ -51,11 +51,8 @@ Uses [ddev-orchestrate](https://github.com/apermo/ddev-orchestrate) to download 
 
 ### Git Hooks
 
-Enable the pre-commit hook (PHPCS + PHPStan on staged files):
-
-```bash
-git config core.hooksPath .githooks
-```
+The pre-commit hook (PHPCS + PHPStan) is managed by [husky](https://typicode.github.io/husky/)
+and activates automatically after `npm install`. No manual configuration required.
 
 ## Template Sync
 

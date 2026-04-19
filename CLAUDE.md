@@ -52,11 +52,9 @@ ddev start && ddev orchestrate   # Full WordPress environment
 
 ## Git Hooks
 
-Pre-commit hook runs PHPCS and PHPStan on staged files. Enable with:
-
-```bash
-git config core.hooksPath .githooks
-```
+Pre-commit hook runs PHPCS (on staged files) and PHPStan (whole project) via
+[husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged).
+It activates automatically on `npm install` via the `prepare` script.
 
 ## CI (GitHub Actions)
 

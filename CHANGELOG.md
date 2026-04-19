@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Pre-commit hook now managed by [husky](https://typicode.github.io/husky/) and
+  [lint-staged](https://github.com/lint-staged/lint-staged). Activates automatically
+  on `npm install` — no manual `git config core.hooksPath` step required.
+
+### Removed
+
+- `.githooks/` directory (replaced by `.husky/`)
+
 ## [0.6.1] - 2026-04-05
 
 ### Fixed

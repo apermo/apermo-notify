@@ -241,10 +241,9 @@ RULESET_EOF
     fi
 fi
 
-# --- Enable git hooks ---
+# --- Git hooks ---
 
-info "Enabling git hooks..."
-git config core.hooksPath .githooks
+info "Git hooks will activate automatically after 'npm install' (via husky)."
 
 # --- Verify no placeholders remain ---
 
@@ -288,7 +287,8 @@ info "Setup complete! Next steps:"
 echo ""
 echo "  1. Review the changes"
 echo "  2. Run: composer install"
-echo "  3. Run: git add -A && git commit -m 'feat: initial project setup'"
-echo "  4. Run: ddev start && ddev orchestrate"
-echo "  5. Add CODECOV_TOKEN secret (Settings > Secrets > Actions)"
+echo "  3. Run: npm install"
+echo "  4. Run: git add -A && git commit -m 'feat: initial project setup'"
+echo "  5. Run: ddev start && ddev orchestrate"
+echo "  6. Add CODECOV_TOKEN secret (Settings > Secrets > Actions)"
 echo ""
