@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `.githooks/` directory (replaced by `.husky/`)
 
+### Fixed
+
+- `ddev orchestrate` failing with "unknown command" on fresh clone: pre-start hook
+  now auto-installs the `apermo/ddev-orchestrate` addon
+
 ## [0.6.1] - 2026-04-05
 
 ### Fixed
