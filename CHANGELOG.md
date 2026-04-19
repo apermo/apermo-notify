@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Accessibility testing scaffolding: `@axe-core/playwright` dependency, shared
+  `e2e/helpers/a11y.js` helper with WCAG 2.1 AA defaults, and `e2e/a11y.spec.js`
+  sample spec. E2E workflow now passes `a11y: true` to the reusable workflow.
+- Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
+  `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
+
 ### Changed
 
 - Pre-commit hook now managed by [husky](https://typicode.github.io/husky/) and
@@ -16,13 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composer install notice now uses the native `wp_admin_notice()` function
   (WP 6.4+) instead of hand-rolled markup
 
-### Added
+### Removed
 
-- Accessibility testing scaffolding: `@axe-core/playwright` dependency, shared
-  `e2e/helpers/a11y.js` helper with WCAG 2.1 AA defaults, and `e2e/a11y.spec.js`
-  sample spec. E2E workflow now passes `a11y: true` to the reusable workflow.
-- Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
-  `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
+- `.githooks/` directory (replaced by `.husky/`)
 
 ### Fixed
 
@@ -30,13 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Check Commit Message Format` check names — updated to `pr-validation / validate`
   and `conventional-commits / validate` to match the renamed jobs in
   `apermo/reusable-workflows` v0.4.0+
-
-### Removed
-
-- `.githooks/` directory (replaced by `.husky/`)
-
-### Fixed
-
 - `ddev orchestrate` failing with "unknown command" on fresh clone: pre-start hook
   now auto-installs the `apermo/ddev-orchestrate` addon
 - Playwright E2E tests failing with `ERR_CERT_AUTHORITY_INVALID` against DDEV's
