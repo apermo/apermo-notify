@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `ddev orchestrate` failing with "unknown command" on fresh clone: pre-start hook
   now auto-installs the `apermo/ddev-orchestrate` addon
+- Playwright E2E tests failing with `ERR_CERT_AUTHORITY_INVALID` against DDEV's
+  self-signed HTTPS certificate (`ignoreHTTPSErrors: true`)
 
 ## [0.6.1] - 2026-04-05
 
