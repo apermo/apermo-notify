@@ -134,6 +134,9 @@ else
     rm -f src/Plugin.php
     rm -f tests/Unit/PluginTest.php
 
+    # Remove plugin-only Plugin Check workflow
+    rm -f .github/workflows/plugin-check.yml
+
     # Update composer.json type
     sedi 's|"wordpress-plugin"|"wordpress-theme"|' composer.json
 
@@ -154,6 +157,7 @@ fi
 if [[ ! "$WPORG_PUBLISH" =~ ^[Yy]$ ]]; then
     info "Removing WordPress.org deploy files..."
     rm -f .github/workflows/wporg-deploy.yml
+    rm -f .github/workflows/plugin-check.yml
     rm -f readme.txt
     rm -rf .wordpress-org/
 else
