@@ -123,6 +123,9 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
     rm -f src/Theme.php
     rm -rf templates/ parts/ assets/
 
+    # Remove theme-only Lighthouse CI scaffolding
+    rm -f .github/workflows/lhci.yml .lighthouserc.js .wp-env.json
+
     # Clean phpstan.neon.dist
     sedi '/- functions.php/d' phpstan.neon.dist
 else

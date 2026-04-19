@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composer install notice now uses the native `wp_admin_notice()` function
   (WP 6.4+) instead of hand-rolled markup
 
+### Added
+
+- Accessibility testing scaffolding: `@axe-core/playwright` dependency, shared
+  `e2e/helpers/a11y.js` helper with WCAG 2.1 AA defaults, and `e2e/a11y.spec.js`
+  sample spec. E2E workflow now passes `a11y: true` to the reusable workflow.
+- Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
+  `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
+
 ### Removed
 
 - `.githooks/` directory (replaced by `.husky/`)
