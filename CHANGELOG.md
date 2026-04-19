@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
   `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
 
+### Fixed
+
+- `setup.sh` branch ruleset used outdated `Check CHANGELOG Entry` /
+  `Check Commit Message Format` check names — updated to `pr-validation / validate`
+  and `conventional-commits / validate` to match the renamed jobs in
+  `apermo/reusable-workflows` v0.4.0+
+
 ### Removed
 
 - `.githooks/` directory (replaced by `.husky/`)
