@@ -23,10 +23,13 @@ if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 		// phpcs:ignore Universal.FunctionDeclarations.NoLongClosures.ExceedsMaximum
 		static function (): void {
 			wp_admin_notice(
-				\sprintf(
-					/* translators: %s: composer install command */
-					__( 'Please run %s to install the required dependencies.', 'plugin-name' ),
-					'<code>composer install</code>',
+				wp_kses(
+					\sprintf(
+						/* translators: %s: composer install command */
+						__( 'Please run %s to install the required dependencies.', 'plugin-name' ),
+						'<code>composer install</code>',
+					),
+					[ 'code' => [] ],
 				),
 				[ 'type' => 'error' ],
 			);
