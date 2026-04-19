@@ -38,5 +38,5 @@
         <exclude-pattern>tests/bootstrap.php</exclude-pattern>
     </rule>
 
-    <config name="minimum_wp_version" value="6.2"/>
+    <config name="minimum_wp_version" value="6.4"/>
 </ruleset>

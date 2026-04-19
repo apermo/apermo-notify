@@ -7,7 +7,7 @@
  * Author URI:  https://apermo.de
  * License:     GPL-2.0-or-later
  * Text Domain: plugin-name
- * Requires at least: 6.2
+ * Requires at least: 6.4
  * Requires PHP: 8.1
  */
 
@@ -22,16 +22,14 @@ if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 		'admin_notices',
 		// phpcs:ignore Universal.FunctionDeclarations.NoLongClosures.ExceedsMaximum
 		static function (): void {
-			echo '<div class="notice notice-error"><p>';
-			echo wp_kses(
+			wp_admin_notice(
 				\sprintf(
 					/* translators: %s: composer install command */
 					__( 'Please run %s to install the required dependencies.', 'plugin-name' ),
 					'<code>composer install</code>',
 				),
-				[ 'code' => [] ],
+				[ 'type' => 'error' ],
 			);
-			echo '</p></div>';
 		},
 	);
 	return;

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hook now managed by [husky](https://typicode.github.io/husky/) and
   [lint-staged](https://github.com/lint-staged/lint-staged). Activates automatically
   on `npm install` — no manual `git config core.hooksPath` step required.
+- Minimum WordPress version bumped from 6.2 to 6.4 (required by `wp_admin_notice()`)
+- Composer install notice now uses the native `wp_admin_notice()` function
+  (WP 6.4+) instead of hand-rolled markup
 
 ### Removed
 
