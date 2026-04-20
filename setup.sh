@@ -123,6 +123,9 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
     rm -f src/Theme.php
     rm -rf templates/ parts/ assets/
 
+    # Remove theme-only Lighthouse CI scaffolding
+    rm -f .github/workflows/lhci.yml .lighthouserc.js .wp-env.json
+
     # Clean phpstan.neon.dist
     sedi '/- functions.php/d' phpstan.neon.dist
 else
@@ -130,6 +133,9 @@ else
     rm -f plugin.php uninstall.php
     rm -f src/Plugin.php
     rm -f tests/Unit/PluginTest.php
+
+    # Remove plugin-only Plugin Check workflow
+    rm -f .github/workflows/plugin-check.yml
 
     # Update composer.json type
     sedi 's|"wordpress-plugin"|"wordpress-theme"|' composer.json
@@ -151,6 +157,7 @@ fi
 if [[ ! "$WPORG_PUBLISH" =~ ^[Yy]$ ]]; then
     info "Removing WordPress.org deploy files..."
     rm -f .github/workflows/wporg-deploy.yml
+    rm -f .github/workflows/plugin-check.yml
     rm -f readme.txt
     rm -rf .wordpress-org/
 else
@@ -194,7 +201,7 @@ if command -v gh &>/dev/null; then
             gh label create "dependencies"     --color "0366D6" --description "Dependency updates" --repo "$OWNER_REPO" 2>/dev/null || true
 
             info "Creating branch ruleset..."
-            REQUIRED_CHECKS='[{"context":"pr-validation / Check CHANGELOG Entry"},{"context":"conventional-commits / Check Commit Message Format"},{"context":"ci / PHPStan"},{"context":"ci / Coding Standards"}]'
+            REQUIRED_CHECKS='[{"context":"pr-validation / validate"},{"context":"conventional-commits / validate"},{"context":"ci / PHPStan"},{"context":"ci / Coding Standards"}]'
 
             gh api "repos/${OWNER_REPO}/rulesets" --method POST --input - <<RULESET_EOF || warn "Could not create ruleset."
 {
@@ -241,10 +248,9 @@ RULESET_EOF
     fi
 fi
 
-# --- Enable git hooks ---
+# --- Git hooks ---
 
-info "Enabling git hooks..."
-git config core.hooksPath .githooks
+info "Git hooks will activate automatically after 'npm install' (via husky)."
 
 # --- Verify no placeholders remain ---
 
@@ -288,7 +294,8 @@ info "Setup complete! Next steps:"
 echo ""
 echo "  1. Review the changes"
 echo "  2. Run: composer install"
-echo "  3. Run: git add -A && git commit -m 'feat: initial project setup'"
-echo "  4. Run: ddev start && ddev orchestrate"
-echo "  5. Add CODECOV_TOKEN secret (Settings > Secrets > Actions)"
+echo "  3. Run: npm install"
+echo "  4. Run: git add -A && git commit -m 'feat: initial project setup'"
+echo "  5. Run: ddev start && ddev orchestrate"
+echo "  6. Add CODECOV_TOKEN secret (Settings > Secrets > Actions)"
 echo ""

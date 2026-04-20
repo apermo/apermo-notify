@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-04-20
+
+### Added
+
+- Accessibility testing scaffolding: `@axe-core/playwright` dependency, shared
+  `e2e/helpers/a11y.js` helper with WCAG 2.1 AA defaults, and `e2e/a11y.spec.js`
+  sample spec. E2E workflow now passes `a11y: true` to the reusable workflow.
+- Theme mode: Lighthouse CI workflow (`.github/workflows/lhci.yml`), starter
+  `.lighthouserc.js` (a11y ≥ 90, performance ≥ 80), and minimal `.wp-env.json`
+- Plugin mode: Plugin Check workflow calling
+  [`apermo/reusable-workflows/reusable-plugin-check.yml`](https://github.com/apermo/reusable-workflows/releases/tag/v0.5.0)
+  (wraps [`wordpress/plugin-check-action`](https://github.com/WordPress/plugin-check-action))
+  to enforce WP.org directory policy. Kept only when WP.org publishing is
+  enabled during `setup.sh`; removed in theme mode or when opting out of WP.org.
+
+### Changed
+
+- Pre-commit hook now managed by [husky](https://typicode.github.io/husky/) and
+  [lint-staged](https://github.com/lint-staged/lint-staged). Activates automatically
+  on `npm install` — no manual `git config core.hooksPath` step required.
+- Upgrade `apermo/apermo-coding-standards` to `^2.9` (2.8.0 added a docblock
+  summary sniff enforcing third-person singular per WordPress style). All
+  template docblock summaries rewritten to conform.
+- Minimum WordPress version bumped from 6.2 to 6.4 (required by `wp_admin_notice()`)
+- Composer install notice now uses the native `wp_admin_notice()` function
+  (WP 6.4+) instead of hand-rolled markup
+
+### Removed
+
+- `.githooks/` directory (replaced by `.husky/`)
+
+### Fixed
+
+- `setup.sh` branch ruleset used outdated `Check CHANGELOG Entry` /
+  `Check Commit Message Format` check names — updated to `pr-validation / validate`
+  and `conventional-commits / validate` to match the renamed jobs in
+  `apermo/reusable-workflows` v0.4.0+
+- `ddev orchestrate` failing with "unknown command" on fresh clone: pre-start hook
+  now auto-installs the `apermo/ddev-orchestrate` addon
+- Playwright E2E tests failing with `ERR_CERT_AUTHORITY_INVALID` against DDEV's
+  self-signed HTTPS certificate (`ignoreHTTPSErrors: true`)
+
 ## [0.6.1] - 2026-04-05
 
 ### Fixed
@@ -92,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Workflow callers missing permissions (caused startup_failure)
 
+[0.7.0]: https://github.com/apermo/template-wordpress/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/apermo/template-wordpress/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/apermo/template-wordpress/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/apermo/template-wordpress/compare/v0.4.1...v0.5.0

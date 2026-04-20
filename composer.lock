@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ea23b9ad10854d10e44332ecdaa18203",
+    "content-hash": "9af462c30698ed3c5451ab3c836145c1",
     "packages": [],
     "packages-dev": [
         {
@@ -57,19 +57,20 @@
         },
         {
             "name": "apermo/apermo-coding-standards",
-            "version": "v2.6.1",
+            "version": "v2.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/apermo/apermo-coding-standards.git",
-                "reference": "6f7c7407a98de64c7adcc6f87e1135806fc63a66"
+                "reference": "36a507e08ca248c2e3074b38b7cc08910cfe1321"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/apermo/apermo-coding-standards/zipball/6f7c7407a98de64c7adcc6f87e1135806fc63a66",
-                "reference": "6f7c7407a98de64c7adcc6f87e1135806fc63a66",
+                "url": "https://api.github.com/repos/apermo/apermo-coding-standards/zipball/36a507e08ca248c2e3074b38b7cc08910cfe1321",
+                "reference": "36a507e08ca248c2e3074b38b7cc08910cfe1321",
                 "shasum": ""
             },
             "require": {
+                "automattic/vipwpcs": "^3.0",
                 "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
                 "php": ">=7.4",
                 "phpcompatibility/phpcompatibility-wp": "^2.1",
@@ -111,7 +112,7 @@
                 "issues": "https://github.com/apermo/apermo-coding-standards/issues",
                 "source": "https://github.com/apermo/apermo-coding-standards"
             },
-            "time": "2026-03-15T15:21:52+00:00"
+            "time": "2026-04-20T07:27:42+00:00"
         },
         {
             "name": "apermo/phpstan-wordpress-rules",

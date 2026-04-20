@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Plugin_Name;
 
 /**
- * Main theme class.
+ * Bootstraps the theme.
  */
 class Theme {
 
 	/**
-	 * Initialize the theme.
+	 * Initializes the theme.
 	 *
 	 * @return void
 	 */
@@ -20,7 +20,7 @@ class Theme {
 	}
 
 	/**
-	 * Set up theme support.
+	 * Sets up theme support.
 	 *
 	 * @return void
 	 */
@@ -30,7 +30,7 @@ class Theme {
 	}
 
 	/**
-	 * Enqueue front-end assets.
+	 * Enqueues front-end assets.
 	 *
 	 * @return void
 	 */

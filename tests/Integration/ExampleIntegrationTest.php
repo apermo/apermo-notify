@@ -13,7 +13,7 @@ use WP_UnitTestCase;
 class ExampleIntegrationTest extends WP_UnitTestCase {
 
 	/**
-	 * WordPress is loaded and available.
+	 * Confirms WordPress is loaded and available.
 	 *
 	 * @return void
 	 */
@@ -22,7 +22,7 @@ class ExampleIntegrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The plugin or theme is active.
+	 * Confirms the plugin or theme is active.
 	 *
 	 * @return void
 	 */
