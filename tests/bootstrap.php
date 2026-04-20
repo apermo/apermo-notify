@@ -26,7 +26,7 @@ if ( $wp_tests_dir !== false && is_dir( $wp_tests_dir ) ) {
 }
 
 /**
- * Load the plugin or theme under test.
+ * Loads the plugin or theme under test.
  *
  * @return void
  */

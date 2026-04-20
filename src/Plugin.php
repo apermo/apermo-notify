@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Plugin_Name;
 
 /**
- * Main plugin class.
+ * Bootstraps the plugin.
  */
 class Plugin {
 
 	public const VERSION = '0.1.0';
 
 	/**
-	 * Main plugin file path.
+	 * Holds the main plugin file path.
 	 *
 	 * @var string
 	 */
 	private static string $file = '';
 
 	/**
-	 * Initialize the plugin.
+	 * Initializes the plugin.
 	 *
 	 * @param string $file Main plugin file path.
 	 *
@@ -34,7 +34,7 @@ class Plugin {
 	}
 
 	/**
-	 * Return the main plugin file path.
+	 * Returns the main plugin file path.
 	 *
 	 * @return string
 	 */
@@ -43,7 +43,7 @@ class Plugin {
 	}
 
 	/**
-	 * Plugin activation.
+	 * Activates the plugin.
 	 *
 	 * @return void
 	 */
@@ -52,7 +52,7 @@ class Plugin {
 	}
 
 	/**
-	 * Plugin deactivation.
+	 * Deactivates the plugin.
 	 *
 	 * @return void
 	 */
@@ -61,7 +61,7 @@ class Plugin {
 	}
 
 	/**
-	 * Boot the plugin after all plugins are loaded.
+	 * Boots the plugin after all plugins are loaded.
 	 *
 	 * @return void
 	 */

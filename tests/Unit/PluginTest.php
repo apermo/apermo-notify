@@ -15,7 +15,7 @@ use Plugin_Name\Plugin;
 class PluginTest extends TestCase {
 
 	/**
-	 * Set up Brain Monkey.
+	 * Sets up Brain Monkey.
 	 *
 	 * @return void
 	 */
@@ -25,7 +25,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Tear down Brain Monkey.
+	 * Tears down Brain Monkey.
 	 *
 	 * @return void
 	 */
@@ -35,7 +35,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Verify init registers activation and deactivation hooks.
+	 * Verifies init registers activation and deactivation hooks.
 	 *
 	 * @return void
 	 */
@@ -58,7 +58,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Verify init stores the plugin file path.
+	 * Verifies init stores the plugin file path.
 	 *
 	 * @return void
 	 */
@@ -79,7 +79,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Verify activate can be called without error.
+	 * Verifies activate can be called without error.
 	 *
 	 * @return void
 	 */
@@ -89,7 +89,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Verify deactivate can be called without error.
+	 * Verifies deactivate can be called without error.
 	 *
 	 * @return void
 	 */
@@ -99,7 +99,7 @@ class PluginTest extends TestCase {
 	}
 
 	/**
-	 * Verify boot can be called without error.
+	 * Verifies boot can be called without error.
 	 *
 	 * @return void
 	 */

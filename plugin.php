@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Plugin Name: Plugin_Name
  * Description: A WordPress plugin.
  * Version:     0.1.0
