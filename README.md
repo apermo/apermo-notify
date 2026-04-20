@@ -8,7 +8,9 @@ GitHub template repository for bootstrapping WordPress plugins and themes. Ships
 ## Requirements
 
 - PHP 8.1+
+- WordPress 6.4+ (required by `wp_admin_notice()`)
 - Composer
+- Node.js 20+ and npm (activates husky pre-commit hook, runs Playwright)
 - [DDEV](https://ddev.readthedocs.io/) (for local development)
 
 ## Installation
@@ -33,12 +35,14 @@ It replaces all placeholders, removes irrelevant mode files, configures DDEV, an
 
 ```bash
 composer install
+npm install              # Activates husky hook + installs Playwright
 composer cs              # Run PHPCS
 composer cs:fix          # Fix PHPCS violations
 composer analyse         # Run PHPStan
 composer test            # Run all tests
 composer test:unit       # Run unit tests only
 composer test:integration # Run integration tests only
+npm run test:e2e         # Run Playwright E2E tests (incl. WCAG 2.1 AA a11y checks)
 ```
 
 ### Local WordPress Environment
