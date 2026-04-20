@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Plugin_Name\Tests\Integration;
 
-use Plugin_Name\Plugin;
+use Plugin_Name\Main;
 use WP_UnitTestCase;
 
 /**
@@ -31,7 +31,7 @@ class ExampleIntegrationTest extends WP_UnitTestCase {
 
 		if ( \file_exists( $plugin_file ) ) {
 			$this->assertNotEmpty(
-				Plugin::VERSION,
+				Main::VERSION,
 				'Plugin version should be set.',
 			);
 		} else {

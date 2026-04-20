@@ -7,12 +7,12 @@ namespace Plugin_Name\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
-use Plugin_Name\Plugin;
+use Plugin_Name\Main;
 
 /**
- * Tests for the Plugin class.
+ * Tests for the Main class.
  */
-class PluginTest extends TestCase {
+class MainTest extends TestCase {
 
 	/**
 	 * Sets up Brain Monkey.
@@ -44,17 +44,17 @@ class PluginTest extends TestCase {
 
 		Functions\expect( 'register_activation_hook' )
 			->once()
-			->with( $file, [ Plugin::class, 'activate' ] );
+			->with( $file, [ Main::class, 'activate' ] );
 
 		Functions\expect( 'register_deactivation_hook' )
 			->once()
-			->with( $file, [ Plugin::class, 'deactivate' ] );
+			->with( $file, [ Main::class, 'deactivate' ] );
 
 		Functions\expect( 'add_action' )
 			->once()
-			->with( 'plugins_loaded', [ Plugin::class, 'boot' ] );
+			->with( 'plugins_loaded', [ Main::class, 'boot' ] );
 
-		Plugin::init( $file );
+		Main::init( $file );
 	}
 
 	/**
@@ -73,9 +73,9 @@ class PluginTest extends TestCase {
 			],
 		);
 
-		Plugin::init( $file );
+		Main::init( $file );
 
-		$this->assertSame( $file, Plugin::file() );
+		$this->assertSame( $file, Main::file() );
 	}
 
 	/**
@@ -84,7 +84,7 @@ class PluginTest extends TestCase {
 	 * @return void
 	 */
 	public function test_activate(): void {
-		Plugin::activate();
+		Main::activate();
 		$this->assertTrue( true );
 	}
 
@@ -94,7 +94,7 @@ class PluginTest extends TestCase {
 	 * @return void
 	 */
 	public function test_deactivate(): void {
-		Plugin::deactivate();
+		Main::deactivate();
 		$this->assertTrue( true );
 	}
 
@@ -104,7 +104,7 @@ class PluginTest extends TestCase {
 	 * @return void
 	 */
 	public function test_boot(): void {
-		Plugin::boot();
+		Main::boot();
 		$this->assertTrue( true );
 	}
 }
