@@ -131,8 +131,8 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
 else
     # Remove plugin files
     rm -f plugin.php uninstall.php
-    rm -f src/Plugin.php
-    rm -f tests/Unit/PluginTest.php
+    rm -f src/Main.php
+    rm -f tests/Unit/MainTest.php
 
     # Remove plugin-only Plugin Check workflow
     rm -f .github/workflows/plugin-check.yml

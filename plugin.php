@@ -40,4 +40,4 @@ if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-Plugin::init( __FILE__ );
+Main::init( __FILE__ );

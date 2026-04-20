@@ -7,7 +7,7 @@ namespace Plugin_Name;
 /**
  * Bootstraps the plugin.
  */
-class Plugin {
+class Main {
 
 	public const VERSION = '0.1.0';
 
