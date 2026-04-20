@@ -21,9 +21,9 @@ Both modes coexist in the repo. The `setup.sh` script (see #10) removes the irre
 ### Key conventions
 
 - PSR-4 autoloading under `src/`
-- Coding standards: `apermo/apermo-coding-standards` ^2.8 (PHPCS). Docblock
+- Coding standards: `apermo/apermo-coding-standards` ^2.9 (PHPCS). Docblock
   summaries must be third-person singular (`Initializes the plugin`, not
-  `Initialize the plugin`) — enforced by the 2.8 summary sniff.
+  `Initialize the plugin`) — enforced by the 2.8+ summary sniff.
 - Static analysis: `apermo/phpstan-wordpress-rules` + `szepeviktor/phpstan-wordpress`
 - Testing: PHPUnit + Brain Monkey + Yoast PHPUnit Polyfills
 - Test suites: `tests/Unit/` and `tests/Integration/`

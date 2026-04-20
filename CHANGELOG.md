@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hook now managed by [husky](https://typicode.github.io/husky/) and
   [lint-staged](https://github.com/lint-staged/lint-staged). Activates automatically
   on `npm install` — no manual `git config core.hooksPath` step required.
-- Upgrade `apermo/apermo-coding-standards` to `^2.8` (2.8.0 adds a docblock
+- Upgrade `apermo/apermo-coding-standards` to `^2.9` (2.8.0 added a docblock
   summary sniff enforcing third-person singular per WordPress style). All
   template docblock summaries rewritten to conform.
 - Minimum WordPress version bumped from 6.2 to 6.4 (required by `wp_admin_notice()`)
