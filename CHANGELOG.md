@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-20
+
+### Changed
+
+- **BREAKING:** Plugin mode main class renamed from `Plugin` to `Main`
+  (`src/Plugin.php` → `src/Main.php`). Resolves the confusing collision
+  with the root `plugin.php` bootstrap file. Derived projects extending
+  or referencing the `Plugin` class must rename usages to `Main` (or
+  keep their own class name and update the `plugin.php` bootstrap call
+  accordingly). Template files updated: `plugin.php`, `setup.sh`,
+  `tests/Unit/MainTest.php`, `tests/Integration/ExampleIntegrationTest.php`,
+  `CLAUDE.md`. See [#39](https://github.com/apermo/template-wordpress/issues/39).
+
 ## [0.7.0] - 2026-04-20
 
 ### Added
@@ -134,6 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Workflow callers missing permissions (caused startup_failure)
 
+[0.8.0]: https://github.com/apermo/template-wordpress/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/apermo/template-wordpress/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/apermo/template-wordpress/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/apermo/template-wordpress/compare/v0.5.0...v0.6.0
