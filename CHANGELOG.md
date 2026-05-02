@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-05-02
+
+### Added
+
+- Opt-in confirm-deactivate example under `src/Admin/DeactivationFlow.php`
+  (plugin mode). Routes the plugin's "Deactivate" link through a
+  confirmation screen that gates destructive cleanup behind capability,
+  nonce, and an in-form checkbox in the same request. The setup script
+  prompts whether to include it; declined removes the files.
+
+### Changed
+
+- **BREAKING:** Bump `apermo/apermo-coding-standards` to `^3.0`. Derived
+  projects must replace any short echo tags `<?= … ?>` with
+  `<?php echo esc_html( … ); ?>` and ensure every `wp_redirect()` /
+  `wp_safe_redirect()` call is followed by `exit;`.
+
 ## [0.8.0] - 2026-04-20
 
 ### Changed

@@ -14,16 +14,18 @@ GitHub template repository for bootstrapping WordPress plugins and themes. Ships
 
 Both modes coexist in the repo. The `setup.sh` script (see #10) removes the irrelevant set after the developer picks a mode.
 
-**Plugin mode files:** `plugin.php` (main file), `src/Main.php`, `uninstall.php`, `.github/workflows/plugin-check.yml` (dropped if WP.org publishing is declined)
+**Plugin mode files:** `plugin.php` (main file), `src/Main.php`, `uninstall.php`, `.github/workflows/plugin-check.yml` (dropped if WP.org publishing is declined), `src/Admin/DeactivationFlow.php` + `src/Admin/views/confirm-deactivate.php` (optional, dropped if declined in setup)
 **Theme mode files:** `style.css`, `functions.php`, `src/Theme.php`, `templates/`, `parts/`, `assets/`, `.github/workflows/lhci.yml`, `.lighthouserc.js`, `.wp-env.json`
 **Shared:** `src/` (PSR-4 root), `tests/`, `e2e/` (incl. `helpers/a11y.js` + `a11y.spec.js`), `composer.json`, CI config, DDEV config
 
 ### Key conventions
 
 - PSR-4 autoloading under `src/`
-- Coding standards: `apermo/apermo-coding-standards` ^2.9 (PHPCS). Docblock
+- Coding standards: `apermo/apermo-coding-standards` ^3.0 (PHPCS). Docblock
   summaries must be third-person singular (`Initializes the plugin`, not
-  `Initialize the plugin`) — enforced by the 2.8+ summary sniff.
+  `Initialize the plugin`) — enforced by the 2.8+ summary sniff. The 3.0
+  release forbids short echo tags `<?= … ?>` and requires `exit;` after
+  every `wp_redirect()` / `wp_safe_redirect()` call.
 - Static analysis: `apermo/phpstan-wordpress-rules` + `szepeviktor/phpstan-wordpress`
 - Testing: PHPUnit + Brain Monkey + Yoast PHPUnit Polyfills
 - Test suites: `tests/Unit/` and `tests/Integration/`

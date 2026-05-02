@@ -49,6 +49,12 @@ done
 
 # WordPress.org publishing
 read -rp "Publish to WordPress.org? (y/N): " WPORG_PUBLISH
+
+# Optional confirm-deactivate example (plugin mode only)
+INCLUDE_DEACTIVATION_FLOW="n"
+if [ "$PROJECT_MODE" = "plugin" ]; then
+    read -rp "Include opt-in confirm-deactivate example? (y/N): " INCLUDE_DEACTIVATION_FLOW
+fi
 echo ""
 
 # --- Derive placeholder values ---
@@ -77,6 +83,16 @@ echo "  Namespace:   ${NAMESPACE}"
 echo "  Composer:    ${COMPOSER_NAME}"
 echo "  Mode:        ${PROJECT_MODE}"
 echo ""
+
+# --- Opt-out: confirm-deactivate example ---
+
+if [ "$PROJECT_MODE" = "plugin" ] && [[ ! "$INCLUDE_DEACTIVATION_FLOW" =~ ^[Yy]$ ]]; then
+    info "Removing opt-in confirm-deactivate example..."
+    rm -rf src/Admin/ tests/Unit/Admin/
+    warn "Now delete the lines marked '// OPT-IN: confirm-deactivate' in:"
+    warn "  - src/Main.php"
+    warn "  - tests/Unit/MainTest.php"
+fi
 
 # --- Replace placeholders ---
 
@@ -128,11 +144,14 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
 
     # Clean phpstan.neon.dist
     sedi '/- functions.php/d' phpstan.neon.dist
+
 else
     # Remove plugin files
     rm -f plugin.php uninstall.php
     rm -f src/Main.php
     rm -f tests/Unit/MainTest.php
+    rm -rf src/Admin/
+    rm -rf tests/Unit/Admin/
 
     # Remove plugin-only Plugin Check workflow
     rm -f .github/workflows/plugin-check.yml
