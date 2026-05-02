@@ -106,6 +106,7 @@ class MainTest extends TestCase {
 	 * @return void
 	 */
 	public function test_boot(): void {
+		// OPT-IN: confirm-deactivate — delete this stub if you declined the example.
 		Functions\stubs( [ 'is_admin' => false ] );
 
 		Main::boot();
