@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in confirm-deactivate example under `src/Admin/DeactivationFlow.php`
+  (plugin mode). Routes the plugin's "Deactivate" link through a
+  confirmation screen that gates destructive cleanup behind capability,
+  nonce, and an in-form checkbox in the same request. The setup script
+  prompts whether to include it; declined removes the files.
+
 ### Changed
 
 - **BREAKING:** Bump `apermo/apermo-coding-standards` to `^3.0`. Derived
