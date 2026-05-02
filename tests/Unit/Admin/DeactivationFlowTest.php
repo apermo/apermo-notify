@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Plugin_Name\Tests\Unit\Admin;
 
+// phpcs:disable SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses.IncorrectlyOrderedUses -- The Plugin_Name\* imports get rewritten by setup.sh; final alphabetical position depends on the chosen namespace.
+
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;

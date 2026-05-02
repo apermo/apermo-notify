@@ -7,9 +7,10 @@ declare(strict_types=1);
  *
  * Variables provided by Plugin_Name\Admin\DeactivationFlow::render_confirm_page():
  *
- * @var string $deactivate   Standard WP deactivate URL (with nonce) for the "keep data" path.
- * @var string $delete_url   admin.php URL the destructive form submits to.
- * @var string $delete_nonce Nonce value for the destructive submission.
+ * @var string $deactivate    Standard WP deactivate URL (with nonce) for the "keep data" path.
+ * @var string $delete_url    admin.php URL the destructive form submits to.
+ * @var string $delete_action admin_action_* handler key for the destructive submission.
+ * @var string $delete_nonce  Nonce value for the destructive submission.
  *
  * Adding a third "export backup before delete" card: insert another <div class="card">
  * between the two existing cards and POST to your own admin-post.php action.
@@ -57,7 +58,7 @@ defined( 'ABSPATH' ) || exit();
 		</p>
 
 		<form method="post" action="<?php echo esc_url( $delete_url ); ?>">
-			<input type="hidden" name="action" value="<?php echo esc_attr( \Plugin_Name\Admin\DeactivationFlow::DELETE_ACTION ); ?>" />
+			<input type="hidden" name="action" value="<?php echo esc_attr( $delete_action ); ?>" />
 			<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $delete_nonce ); ?>" />
 
 			<p>

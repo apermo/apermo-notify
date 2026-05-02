@@ -96,9 +96,10 @@ class DeactivationFlow {
 		$basename = plugin_basename( Main::file() );
 
 		// phpcs:disable SlevomatCodingStandard.Variables.UnusedVariable.UnusedVariable -- Used by the included view.
-		$deactivate   = $this->safe_deactivate_url( $basename );
-		$delete_url   = admin_url( 'admin.php' );
-		$delete_nonce = wp_create_nonce( self::DELETE_ACTION );
+		$deactivate    = $this->safe_deactivate_url( $basename );
+		$delete_url    = admin_url( 'admin.php' );
+		$delete_action = self::DELETE_ACTION;
+		$delete_nonce  = wp_create_nonce( self::DELETE_ACTION );
 		// phpcs:enable SlevomatCodingStandard.Variables.UnusedVariable.UnusedVariable
 
 		require __DIR__ . '/views/confirm-deactivate.php';

@@ -49,6 +49,12 @@ done
 
 # WordPress.org publishing
 read -rp "Publish to WordPress.org? (y/N): " WPORG_PUBLISH
+
+# Optional confirm-deactivate example (plugin mode only)
+INCLUDE_DEACTIVATION_FLOW="n"
+if [ "$PROJECT_MODE" = "plugin" ]; then
+    read -rp "Include opt-in confirm-deactivate example? (y/N): " INCLUDE_DEACTIVATION_FLOW
+fi
 echo ""
 
 # --- Derive placeholder values ---
@@ -77,6 +83,93 @@ echo "  Namespace:   ${NAMESPACE}"
 echo "  Composer:    ${COMPOSER_NAME}"
 echo "  Mode:        ${PROJECT_MODE}"
 echo ""
+
+# --- Opt-out: confirm-deactivate example ---
+
+# Run before placeholder replacement so heredoc content uses the original
+# tokens (Plugin_Name, plugin-name) and gets rewritten by the normal pass.
+if [ "$PROJECT_MODE" = "plugin" ] && [[ ! "$INCLUDE_DEACTIVATION_FLOW" =~ ^[Yy]$ ]]; then
+    info "Removing opt-in confirm-deactivate example..."
+    rm -rf src/Admin/
+    rm -rf tests/Unit/Admin/
+
+    cat > src/Main.php <<'MAIN_EOF'
+<?php
+
+declare(strict_types=1);
+
+namespace Plugin_Name;
+
+/**
+ * Bootstraps the plugin.
+ */
+class Main {
+
+	public const VERSION = '0.1.0';
+
+	/**
+	 * Holds the main plugin file path.
+	 *
+	 * @var string
+	 */
+	private static string $file = '';
+
+	/**
+	 * Initializes the plugin.
+	 *
+	 * @param string $file Main plugin file path.
+	 *
+	 * @return void
+	 */
+	public static function init( string $file ): void {
+		self::$file = $file;
+
+		register_activation_hook( $file, [ self::class, 'activate' ] );
+		register_deactivation_hook( $file, [ self::class, 'deactivate' ] );
+		add_action( 'plugins_loaded', [ self::class, 'boot' ] );
+	}
+
+	/**
+	 * Returns the main plugin file path.
+	 *
+	 * @return string
+	 */
+	public static function file(): string {
+		return self::$file;
+	}
+
+	/**
+	 * Activates the plugin.
+	 *
+	 * @return void
+	 */
+	public static function activate(): void {
+		// Activation logic.
+	}
+
+	/**
+	 * Deactivates the plugin.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		// Deactivation logic.
+	}
+
+	/**
+	 * Boots the plugin after all plugins are loaded.
+	 *
+	 * @return void
+	 */
+	public static function boot(): void {
+		// Initialize plugin functionality.
+	}
+}
+MAIN_EOF
+
+    # Delete the is_admin stub and the blank line that follows it.
+    sedi "/Functions\\\\stubs( \\[ 'is_admin' => false \\] );/{N;d;}" tests/Unit/MainTest.php
+fi
 
 # --- Replace placeholders ---
 
@@ -128,11 +221,14 @@ if [ "$PROJECT_MODE" = "plugin" ]; then
 
     # Clean phpstan.neon.dist
     sedi '/- functions.php/d' phpstan.neon.dist
+
 else
     # Remove plugin files
     rm -f plugin.php uninstall.php
     rm -f src/Main.php
     rm -f tests/Unit/MainTest.php
+    rm -rf src/Admin/
+    rm -rf tests/Unit/Admin/
 
     # Remove plugin-only Plugin Check workflow
     rm -f .github/workflows/plugin-check.yml
