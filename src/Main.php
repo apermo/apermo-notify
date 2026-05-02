@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Plugin_Name;
 
+use Plugin_Name\Admin\DeactivationFlow;
+
 /**
  * Bootstraps the plugin.
  */
@@ -66,6 +68,8 @@ class Main {
 	 * @return void
 	 */
 	public static function boot(): void {
-		// Initialize plugin functionality.
+		if ( is_admin() ) {
+			( new DeactivationFlow() )->register();
+		}
 	}
 }

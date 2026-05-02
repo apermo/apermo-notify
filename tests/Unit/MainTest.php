@@ -104,6 +104,8 @@ class MainTest extends TestCase {
 	 * @return void
 	 */
 	public function test_boot(): void {
+		Functions\stubs( [ 'is_admin' => false ] );
+
 		Main::boot();
 		$this->assertTrue( true );
 	}
