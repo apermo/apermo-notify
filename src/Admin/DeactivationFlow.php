@@ -77,7 +77,7 @@ class DeactivationFlow {
 			'',
 			__( 'Deactivate plugin-name', 'plugin-name' ),
 			__( 'Deactivate plugin-name', 'plugin-name' ),
-			'activate_plugins',
+			$this->current_capability(),
 			self::CONFIRM_PAGE,
 			[ $this, 'render_confirm_page' ],
 		);
@@ -89,7 +89,7 @@ class DeactivationFlow {
 	 * @return void
 	 */
 	public function render_confirm_page(): void {
-		if ( ! current_user_can( 'activate_plugins' ) ) {
+		if ( ! current_user_can( $this->current_capability() ) ) {
 			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'plugin-name' ), 403 );
 		}
 
@@ -97,12 +97,26 @@ class DeactivationFlow {
 
 		// phpcs:disable SlevomatCodingStandard.Variables.UnusedVariable.UnusedVariable -- Used by the included view.
 		$deactivate    = $this->safe_deactivate_url( $basename );
-		$delete_url    = admin_url( 'admin.php' );
+		$delete_url    = is_network_admin() ? network_admin_url( 'admin.php' ) : admin_url( 'admin.php' );
 		$delete_action = self::DELETE_ACTION;
 		$delete_nonce  = wp_create_nonce( self::DELETE_ACTION );
 		// phpcs:enable SlevomatCodingStandard.Variables.UnusedVariable.UnusedVariable
 
 		require __DIR__ . '/views/confirm-deactivate.php';
+	}
+
+	/**
+	 * Returns the capability required for both viewing the confirmation screen
+	 * and submitting the destructive form. Mirrors WordPress's plugin-row
+	 * deactivation gate: network-active plugins need `manage_network_plugins`,
+	 * everything else uses `activate_plugins`.
+	 *
+	 * @return string
+	 */
+	private function current_capability(): string {
+		return is_plugin_active_for_network( plugin_basename( Main::file() ) )
+			? 'manage_network_plugins'
+			: 'activate_plugins';
 	}
 
 	/**
@@ -137,23 +151,23 @@ class DeactivationFlow {
 			wp_die( esc_html__( 'You must be logged in.', 'plugin-name' ), 403 );
 		}
 
-		$basename   = plugin_basename( Main::file() );
-		$capability = is_plugin_active_for_network( $basename ) ? 'manage_network_plugins' : 'activate_plugins';
-
-		if ( ! current_user_can( $capability ) ) {
+		if ( ! current_user_can( $this->current_capability() ) ) {
 			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'plugin-name' ), 403 );
 		}
 
 		check_admin_referer( self::DELETE_ACTION );
 
-		$confirm = isset( $_POST['confirm'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['confirm'] ) ) : '';
+		$confirm = isset( $_POST['confirm'] ) && \is_scalar( $_POST['confirm'] )
+			? sanitize_text_field( wp_unslash( (string) $_POST['confirm'] ) )
+			: '';
 
-		if ( $confirm === '' ) {
+		if ( $confirm !== '1' ) {
 			wp_die( esc_html__( 'Confirmation checkbox was not checked.', 'plugin-name' ), 400 );
 		}
 
-		$this->run_cleanup();
+		$this->cleanup_plugin_data();
 
+		$basename = plugin_basename( Main::file() );
 		deactivate_plugins( $basename, false, is_network_admin() );
 
 		$redirect = add_query_arg(
@@ -169,25 +183,14 @@ class DeactivationFlow {
 	}
 
 	/**
-	 * Switches to the main site on multisite, runs cleanup, then restores
-	 * context. Single-site installs run cleanup directly.
-	 *
-	 * @return void
-	 */
-	private function run_cleanup(): void {
-		if ( is_multisite() ) {
-			switch_to_blog( get_main_site_id() );
-			$this->cleanup_plugin_data();
-			restore_current_blog();
-			return;
-		}
-
-		$this->cleanup_plugin_data();
-	}
-
-	/**
 	 * Removes all plugin-owned data. Override or extend in derived projects
 	 * to drop custom tables, options, transients, and metadata.
+	 *
+	 * Multisite caveat: when the plugin is **network-activated**, settings
+	 * typically live in network meta (`*_site_option`), not in any single
+	 * site's options table. When the plugin is **per-site activated**, each
+	 * site has its own copy in its options table — wiping all of them
+	 * requires iterating sites explicitly.
 	 *
 	 * Example extensions:
 	 * - $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}plugin_name_…" );
@@ -201,6 +204,24 @@ class DeactivationFlow {
 	 * @return void
 	 */
 	protected function cleanup_plugin_data(): void {
+		if ( is_multisite() && is_plugin_active_for_network( plugin_basename( Main::file() ) ) ) {
+			// Network-activated: site options live in network meta;
+			// `delete_site_option()` works regardless of the current blog.
+			delete_site_option( 'plugin_name_settings' );
+
+			/*
+			 * To wipe per-site data on every site, iterate explicitly:
+			 *
+			 *     foreach ( get_sites( [ 'fields' => 'ids' ] ) as $site_id ) {
+			 *         switch_to_blog( $site_id );
+			 *         delete_option( 'plugin_name_per_site_settings' );
+			 *         restore_current_blog();
+			 *     }
+			 */
+			return;
+		}
+
+		// Per-site activation or single-site install: delete on the current site.
 		delete_option( 'plugin_name_settings' );
 	}
 }

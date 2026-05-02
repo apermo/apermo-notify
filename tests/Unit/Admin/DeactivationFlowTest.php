@@ -221,4 +221,63 @@ class DeactivationFlowTest extends TestCase {
 
 		( new DeactivationFlow() )->handle_destructive();
 	}
+
+	/**
+	 * Verifies the network-admin path: capability is `manage_network_plugins`,
+	 * cleanup uses `delete_site_option`, deactivation is network-wide, and
+	 * the redirect target is the network plugins screen.
+	 *
+	 * @return void
+	 */
+	public function test_handle_destructive_network_admin_path(): void {
+		Functions\stubs(
+			[
+				'is_user_logged_in'            => true,
+				'plugin_basename'              => 'plugin-name/plugin.php',
+				'is_plugin_active_for_network' => true,
+				'current_user_can'             => true,
+				'check_admin_referer'          => 1,
+				'is_multisite'                 => true,
+				'is_network_admin'             => true,
+				'esc_html__'                   => static fn ( string $text ): string => $text,
+				'wp_unslash'                   => static fn ( string $value ): string => $value,
+			],
+		);
+
+		Functions\stubs(
+			[
+				'network_admin_url'   => static fn ( string $path ): string => 'https://example.tld/wp-admin/network/' . $path,
+				'add_query_arg'       => static fn ( array $args, string $url ): string => $url . '?' . \http_build_query( $args ),
+				'sanitize_text_field' => static fn ( string $value ): string => $value,
+			],
+		);
+
+		Functions\expect( 'delete_site_option' )
+			->once()
+			->with( 'plugin_name_settings' );
+
+		Functions\expect( 'deactivate_plugins' )
+			->once()
+			->with( 'plugin-name/plugin.php', false, true );
+
+		$captured_url = null;
+		Functions\expect( 'wp_safe_redirect' )
+			->once()
+			->andReturnUsing(
+				static function ( string $url ) use ( &$captured_url ): never {
+					$captured_url = $url;
+					throw new RuntimeException( 'redirected' );
+				},
+			);
+
+		$this->expectException( RuntimeException::class );
+
+		$_POST = [ 'confirm' => '1' ];
+
+		try {
+			( new DeactivationFlow() )->handle_destructive();
+		} finally {
+			$this->assertStringContainsString( 'wp-admin/network/plugins.php', (string) $captured_url );
+		}
+	}
 }

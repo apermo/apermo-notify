@@ -16,7 +16,7 @@ declare(strict_types=1);
  * between the two existing cards and POST to your own admin-post.php action.
  */
 
-defined( 'ABSPATH' ) || exit();
+\defined( 'ABSPATH' ) || exit();
 
 ?>
 <div class="wrap">
