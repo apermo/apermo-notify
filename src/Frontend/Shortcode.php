@@ -109,6 +109,8 @@ final class Shortcode {
 				return __( 'That email address does not look valid.', 'apermo-notify' );
 			case 'invalid':
 				return __( 'Something went wrong. Please try again.', 'apermo-notify' );
+			case 'mail_failure':
+				return __( 'We could not send the confirmation email. Please try again in a moment.', 'apermo-notify' );
 			default:
 				return '';
 		}
