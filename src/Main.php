@@ -6,6 +6,7 @@ namespace Apermo\Notify;
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Subscription\OptInFlow;
 
 /**
  * Bootstraps the plugin.
@@ -73,5 +74,7 @@ class Main {
 		if ( is_admin() ) {
 			( new DeactivationFlow() )->register();
 		}
+
+		( new OptInFlow() )->register();
 	}
 }

@@ -6,3 +6,5 @@ parameters:
         - uninstall.php
     excludePaths:
         - src/Lib/*
+    # apply_filters docblocks describe expected types, not runtime guarantees.
+    treatPhpDocTypesAsCertain: false
