@@ -95,7 +95,7 @@ class Custom_Tables {
 			throw new Exception( 'Invalid SQL, add %1$s for the table name and optionally %2$s for the SQL collation' );
 		}
 
-		$create_sql = sprintf( $create_sql, $wpdb->prefix . $table_name, 'COLLATE ' . $wpdb->collate );
+		$create_sql = sprintf( $create_sql, $wpdb->prefix . $table_name, $wpdb->get_charset_collate() );
 
 		$this->tables[ $table_name ] = $create_sql;
 	}
