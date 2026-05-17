@@ -51,7 +51,7 @@ class Main {
 	 * @return void
 	 */
 	public static function activate(): void {
-		// Activation logic.
+		Activation::activate();
 	}
 
 	/**

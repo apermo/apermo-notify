@@ -39,6 +39,19 @@ class DeactivationFlowTest extends TestCase {
 	}
 
 	/**
+	 * Installs a minimal anonymous-class $wpdb stub for tests that exercise the
+	 * data-wipe path. Required because Activation::drop_all() issues raw
+	 * DROP TABLE statements through $wpdb->query().
+	 *
+	 * @return void
+	 */
+	private function install_wpdb_stub(): void {
+		// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited
+		$GLOBALS['wpdb'] = new WpdbStub();
+		// phpcs:enable WordPress.WP.GlobalVariablesOverride.Prohibited
+	}
+
+	/**
 	 * Tears down Brain Monkey and superglobals.
 	 *
 	 * @return void
@@ -198,9 +211,17 @@ class DeactivationFlowTest extends TestCase {
 			],
 		);
 
+		$this->install_wpdb_stub();
+
 		Functions\expect( 'delete_option' )
-			->once()
-			->with( 'apermo_notify_settings' );
+			->twice()
+			->withArgs(
+				static fn ( string $option ): bool => \in_array(
+					$option,
+					[ 'apermo_notify_settings', 'apermo_notify_db_version' ],
+					true,
+				),
+			);
 
 		Functions\expect( 'deactivate_plugins' )
 			->once()

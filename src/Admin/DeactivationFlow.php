@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Admin;
 
+use Apermo\Notify\Activation;
 use Apermo\Notify\Main;
 
 /**
@@ -221,7 +222,7 @@ class DeactivationFlow {
 			return;
 		}
 
-		// Per-site activation or single-site install: delete on the current site.
+		Activation::drop_all();
 		delete_option( 'apermo_notify_settings' );
 	}
 }

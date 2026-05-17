@@ -81,17 +81,10 @@ class MainTest extends TestCase {
 	}
 
 	/**
-	 * Verifies activate can be called without error.
-	 *
-	 * @return void
-	 */
-	public function test_activate(): void {
-		Main::activate();
-		$this->assertTrue( true );
-	}
-
-	/**
 	 * Verifies deactivate can be called without error.
+	 *
+	 * Activation's smoke test was moved to tests/Integration/ActivationTest.php
+	 * once the real implementation gained DB side effects.
 	 *
 	 * @return void
 	 */
