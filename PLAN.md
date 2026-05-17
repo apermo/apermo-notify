@@ -1,8 +1,7 @@
 # apermo-notify — Implementation Plan
 
-> Status: planning. The repo is a fresh checkout of `apermo/template-wordpress`. `setup.sh`
-> has not been run yet — all `Plugin_Name` / `plugin-name` / `plugin_name` placeholders are
-> still in place.
+> Status: v0.1 MVP landed in PR #1. This document is the original architecture plan;
+> see CHANGELOG.md for what actually shipped and remaining roadmap items in §5 below.
 
 ## 1. Goal
 
@@ -161,18 +160,18 @@ Actions:
 
 ## 5. Roadmap
 
-### v0.1 — MVP (per-post + per-page only)
-- [ ] Run `setup.sh` (slug `apermo-notify`, namespace `Apermo\Notify`, plugin mode, no theme bits).
-- [ ] DB schema + activation/uninstall.
-- [ ] `Subscription/Repository`, `Token`, `OptInFlow`.
-- [ ] Frontend: shortcode + Gutenberg block + form handler (admin-post.php).
-- [ ] Dispatch on `publish` and on `update` (with editor checkbox).
-- [ ] Confirmation, unsubscribe, and basic plain-text email templates.
-- [ ] Admin: per-post subscriber count meta box, global subscriber list table, settings page.
-- [ ] Privacy: exporter + eraser.
-- [ ] Tests: Unit (Brain Monkey) for Resolver, Token, Repository; Integration for
-      dispatch on real hook flow; Playwright E2E for the subscribe → confirm → receive →
-      unsubscribe round-trip.
+### v0.1 — MVP (per-post + per-page only) — landed in PR #1
+- [x] Run `setup.sh` (slug `apermo-notify`, namespace `Apermo\Notify`, plugin mode, no theme bits).
+- [x] DB schema + activation/uninstall.
+- [x] `Subscription/Repository`, `Token`, `OptInFlow`.
+- [x] Frontend: shortcode + form handler (admin-post.php). Gutenberg block deferred to v0.2.
+- [x] Dispatch on `publish` and on `update` (with editor checkbox).
+- [x] Confirmation, unsubscribe, and basic plain-text email templates.
+- [x] Admin: per-post subscriber count meta box, global subscribers admin page (simple table; `WP_List_Table` deferred to v0.2). Settings page deferred.
+- [x] Privacy: exporter + eraser.
+- [x] Tests: Unit (Brain Monkey) for Resolver, Token, Repository; Integration for
+      dispatch on real hook flow; Playwright E2E for the subscribe → confirm
+      round-trip (full email round-trip deferred to a follow-up E2E spec).
 
 ### v0.2 — Stream subscriptions
 - [ ] Subscribe by author / term / post_type.
