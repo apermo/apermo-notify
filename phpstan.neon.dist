@@ -4,3 +4,5 @@ parameters:
         - src
         - plugin.php
         - uninstall.php
+    excludePaths:
+        - src/Lib/*

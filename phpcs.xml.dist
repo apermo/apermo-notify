@@ -9,6 +9,8 @@
     <exclude-pattern>.ddev/*</exclude-pattern>
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>node_modules/*</exclude-pattern>
+    <!-- Vendored from external gists (see header comments in src/Lib). -->
+    <exclude-pattern>src/Lib/*</exclude-pattern>
 
     <arg name="extensions" value="php"/>
 

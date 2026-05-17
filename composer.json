@@ -23,7 +23,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Apermo\\Notify\\": "src/"
+            "Apermo\\Notify\\": "src/",
+            "apermo\\WPTools\\": "src/Lib/"
         }
     },
     "autoload-dev": {
