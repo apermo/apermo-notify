@@ -14,8 +14,8 @@ namespace Apermo\Notify\Tests\Integration;
 use Apermo\Notify\Activation;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Subscription\Repository;
+use RuntimeException;
 use WP_UnitTestCase;
-use WPDieException;
 
 /**
  * Drives the subscribe form's POST handler against the real DB.
@@ -44,6 +44,27 @@ final class FormHandlerTest extends WP_UnitTestCase {
 		$_POST                  = [];
 		$_GET                   = [];
 		$_SERVER['REMOTE_ADDR'] = '203.0.113.10';
+
+		// `FormHandler::handle()` ends in `wp_safe_redirect( … ); exit;`. The
+		// bare `exit` would halt PHPUnit, so we intercept `wp_redirect` to throw
+		// before the header is sent and before `exit` executes.
+		add_filter(
+			'wp_redirect',
+			static function ( string $location ): never {
+				throw new RuntimeException( esc_html( 'redirect:' . $location ) );
+			},
+			1,
+		);
+	}
+
+	/**
+	 * Tears down the redirect interceptor.
+	 *
+	 * @return void
+	 */
+	public function tear_down(): void {
+		remove_all_filters( 'wp_redirect' );
+		parent::tear_down();
 	}
 
 	/**
@@ -58,13 +79,14 @@ final class FormHandlerTest extends WP_UnitTestCase {
 			'_wpnonce' => wp_create_nonce( FormHandler::NONCE_ACTION ),
 		];
 
-		$this->expectException( WPDieException::class );
-
 		try {
 			( new FormHandler() )->handle();
-		} finally {
-			$this->assertSame( 1, Repository::count_confirmed_for_target( 'post', $this->post_id ) + $this->pending_count() );
+			$this->fail( 'FormHandler::handle() should have redirected.' );
+		} catch ( RuntimeException $caught ) {
+			$this->assertStringStartsWith( 'redirect:', $caught->getMessage() );
 		}
+
+		$this->assertSame( 1, $this->pending_count() );
 	}
 
 	/**
@@ -83,13 +105,14 @@ final class FormHandlerTest extends WP_UnitTestCase {
 			'_wpnonce' => wp_create_nonce( FormHandler::NONCE_ACTION ),
 		];
 
-		$this->expectException( WPDieException::class );
-
 		try {
 			( new FormHandler() )->handle();
-		} finally {
-			$this->assertSame( 1, $this->pending_count() );
+			$this->fail( 'FormHandler::handle() should have redirected.' );
+		} catch ( RuntimeException $caught ) {
+			$this->assertStringContainsString( 'apermo_notify_result', $caught->getMessage() );
 		}
+
+		$this->assertSame( 1, $this->pending_count() );
 	}
 
 	/**
