@@ -100,7 +100,13 @@ class MainTest extends TestCase {
 	 */
 	public function test_boot(): void {
 		// OPT-IN: confirm-deactivate — delete this stub if you declined the example.
-		Functions\stubs( [ 'is_admin' => false ] );
+		Functions\stubs(
+			[
+				'is_admin'      => false,
+				'add_action'    => null,
+				'add_shortcode' => null,
+			],
+		);
 
 		Main::boot();
 		$this->assertTrue( true );
