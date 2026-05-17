@@ -43,15 +43,17 @@ class ActivationTest extends WP_UnitTestCase {
 		$subscriptions = $wpdb->prefix . Activation::SUBSCRIPTIONS_TABLE;
 		$sent_log      = $wpdb->prefix . Activation::SENT_LOG_TABLE;
 
-		$this->assertSame(
+		$all_tables = $wpdb->get_col( 'SHOW TABLES' );
+
+		$this->assertContains(
 			$subscriptions,
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriptions ) ),
-			'Subscriptions table should be created.',
+			$all_tables,
+			'Subscriptions table should be created. Actual tables: ' . \implode( ', ', $all_tables ),
 		);
-		$this->assertSame(
+		$this->assertContains(
 			$sent_log,
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sent_log ) ),
-			'Sent-log table should be created.',
+			$all_tables,
+			'Sent-log table should be created. Actual tables: ' . \implode( ', ', $all_tables ),
 		);
 	}
 
