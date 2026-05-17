@@ -25,7 +25,7 @@ class ActivationTest extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	protected function set_up(): void {
+	public function set_up(): void {
 		parent::set_up();
 		Activation::drop_all();
 	}

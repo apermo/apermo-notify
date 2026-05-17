@@ -35,7 +35,7 @@ final class DispatchTest extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	protected function set_up(): void {
+	public function set_up(): void {
 		parent::set_up();
 		Activation::drop_all();
 		Activation::activate();
@@ -59,7 +59,7 @@ final class DispatchTest extends WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	protected function tear_down(): void {
+	public function tear_down(): void {
 		remove_all_filters( 'pre_wp_mail' );
 		parent::tear_down();
 	}
