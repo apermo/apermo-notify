@@ -14,3 +14,4 @@ jobs:
         with:
             wp-versions: '["latest"]'
             a11y: true
+            mailpit: true
