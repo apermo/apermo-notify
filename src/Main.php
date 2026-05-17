@@ -11,6 +11,8 @@ use Apermo\Notify\Admin\SubscribersPage;
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Frontend\Shortcode;
+use Apermo\Notify\Privacy\Eraser;
+use Apermo\Notify\Privacy\Exporter;
 use Apermo\Notify\Subscription\OptInFlow;
 
 /**
@@ -84,6 +86,8 @@ class Main {
 		( new FormHandler() )->register();
 		( new Shortcode() )->register();
 		( new PostHooks() )->register();
+		( new Exporter() )->register();
+		( new Eraser() )->register();
 
 		if ( is_admin() ) {
 			( new PostMetaBox() )->register();
