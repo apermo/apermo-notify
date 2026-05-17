@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Plugin_Name\Tests\Unit\Admin;
+namespace Apermo\Notify\Tests\Unit\Admin;
 
-// phpcs:disable SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses.IncorrectlyOrderedUses -- The Plugin_Name\* imports get rewritten by setup.sh; final alphabetical position depends on the chosen namespace.
+// phpcs:disable SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses.IncorrectlyOrderedUses -- The Apermo_Notify\* imports get rewritten by setup.sh; final alphabetical position depends on the chosen namespace.
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use PHPUnit\Framework\TestCase;
-use Plugin_Name\Admin\DeactivationFlow;
-use Plugin_Name\Main;
+use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Main;
 use RuntimeException;
 
 /**
@@ -56,12 +56,12 @@ class DeactivationFlowTest extends TestCase {
 	 * @return void
 	 */
 	public function test_register_wires_hooks(): void {
-		Functions\stubs( [ 'plugin_basename' => 'plugin-name/plugin.php' ] );
+		Functions\stubs( [ 'plugin_basename' => 'apermo-notify/plugin.php' ] );
 
 		( new DeactivationFlow() )->register();
 
-		$this->assertTrue( has_filter( 'plugin_action_links_plugin-name/plugin.php' ) > 0 );
-		$this->assertTrue( has_filter( 'network_admin_plugin_action_links_plugin-name/plugin.php' ) > 0 );
+		$this->assertTrue( has_filter( 'plugin_action_links_apermo-notify/plugin.php' ) > 0 );
+		$this->assertTrue( has_filter( 'network_admin_plugin_action_links_apermo-notify/plugin.php' ) > 0 );
 		$this->assertTrue( has_action( 'admin_menu' ) > 0 );
 		$this->assertTrue( has_action( 'network_admin_menu' ) > 0 );
 		$this->assertTrue( has_action( 'admin_action_' . DeactivationFlow::DELETE_ACTION ) > 0 );
@@ -113,7 +113,7 @@ class DeactivationFlowTest extends TestCase {
 		Functions\stubs(
 			[
 				'is_user_logged_in'            => true,
-				'plugin_basename'              => 'plugin-name/plugin.php',
+				'plugin_basename'              => 'apermo-notify/plugin.php',
 				'is_plugin_active_for_network' => false,
 				'current_user_can'             => false,
 				'esc_html__'                   => static fn ( string $text ): string => $text,
@@ -144,7 +144,7 @@ class DeactivationFlowTest extends TestCase {
 		Functions\stubs(
 			[
 				'is_user_logged_in'            => true,
-				'plugin_basename'              => 'plugin-name/plugin.php',
+				'plugin_basename'              => 'apermo-notify/plugin.php',
 				'is_plugin_active_for_network' => false,
 				'current_user_can'             => true,
 				'check_admin_referer'          => 1,
@@ -179,7 +179,7 @@ class DeactivationFlowTest extends TestCase {
 		Functions\stubs(
 			[
 				'is_user_logged_in'            => true,
-				'plugin_basename'              => 'plugin-name/plugin.php',
+				'plugin_basename'              => 'apermo-notify/plugin.php',
 				'is_plugin_active_for_network' => false,
 				'current_user_can'             => true,
 				'check_admin_referer'          => 1,
@@ -200,11 +200,11 @@ class DeactivationFlowTest extends TestCase {
 
 		Functions\expect( 'delete_option' )
 			->once()
-			->with( 'plugin_name_settings' );
+			->with( 'apermo_notify_settings' );
 
 		Functions\expect( 'deactivate_plugins' )
 			->once()
-			->with( 'plugin-name/plugin.php', false, false );
+			->with( 'apermo-notify/plugin.php', false, false );
 
 		Functions\expect( 'wp_safe_redirect' )
 			->once()
@@ -233,7 +233,7 @@ class DeactivationFlowTest extends TestCase {
 		Functions\stubs(
 			[
 				'is_user_logged_in'            => true,
-				'plugin_basename'              => 'plugin-name/plugin.php',
+				'plugin_basename'              => 'apermo-notify/plugin.php',
 				'is_plugin_active_for_network' => true,
 				'current_user_can'             => true,
 				'check_admin_referer'          => 1,
@@ -254,11 +254,11 @@ class DeactivationFlowTest extends TestCase {
 
 		Functions\expect( 'delete_site_option' )
 			->once()
-			->with( 'plugin_name_settings' );
+			->with( 'apermo_notify_settings' );
 
 		Functions\expect( 'deactivate_plugins' )
 			->once()
-			->with( 'plugin-name/plugin.php', false, true );
+			->with( 'apermo-notify/plugin.php', false, true );
 
 		$captured_url = null;
 		Functions\expect( 'wp_safe_redirect' )

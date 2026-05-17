@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Plugin_Name\Admin;
+namespace Apermo\Notify\Admin;
 
-use Plugin_Name\Main;
+use Apermo\Notify\Main;
 
 /**
  * Routes the plugin's "Deactivate" link through a confirmation screen so that
@@ -20,12 +20,12 @@ class DeactivationFlow {
 	/**
 	 * Hidden admin page slug used for the confirmation screen.
 	 */
-	public const CONFIRM_PAGE = 'plugin-name-deactivate';
+	public const CONFIRM_PAGE = 'apermo-notify-deactivate';
 
 	/**
 	 * admin-post.php / admin_action_* handler key for the destructive submission.
 	 */
-	public const DELETE_ACTION = 'plugin_name_deactivate_and_delete';
+	public const DELETE_ACTION = 'apermo_notify_deactivate_and_delete';
 
 	/**
 	 * Wires the deactivation flow into WordPress.
@@ -61,7 +61,7 @@ class DeactivationFlow {
 		$actions['deactivate'] = \sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
-			esc_html__( 'Deactivate', 'plugin-name' ),
+			esc_html__( 'Deactivate', 'apermo-notify' ),
 		);
 
 		return $actions;
@@ -75,8 +75,8 @@ class DeactivationFlow {
 	public function register_hidden_page(): void {
 		add_submenu_page(
 			'',
-			__( 'Deactivate plugin-name', 'plugin-name' ),
-			__( 'Deactivate plugin-name', 'plugin-name' ),
+			__( 'Deactivate apermo-notify', 'apermo-notify' ),
+			__( 'Deactivate apermo-notify', 'apermo-notify' ),
 			$this->current_capability(),
 			self::CONFIRM_PAGE,
 			[ $this, 'render_confirm_page' ],
@@ -90,7 +90,7 @@ class DeactivationFlow {
 	 */
 	public function render_confirm_page(): void {
 		if ( ! current_user_can( $this->current_capability() ) ) {
-			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'plugin-name' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ), 403 );
 		}
 
 		$basename = plugin_basename( Main::file() );
@@ -123,7 +123,7 @@ class DeactivationFlow {
 	 * Builds the standard WordPress deactivate URL with nonce, used by the
 	 * "keep data" path on the confirmation screen.
 	 *
-	 * @param string $basename Plugin basename, e.g. plugin-name/plugin.php.
+	 * @param string $basename Plugin basename, e.g. apermo-notify/plugin.php.
 	 *
 	 * @return string
 	 */
@@ -148,11 +148,11 @@ class DeactivationFlow {
 	 */
 	public function handle_destructive(): void {
 		if ( ! is_user_logged_in() ) {
-			wp_die( esc_html__( 'You must be logged in.', 'plugin-name' ), 403 );
+			wp_die( esc_html__( 'You must be logged in.', 'apermo-notify' ), 403 );
 		}
 
 		if ( ! current_user_can( $this->current_capability() ) ) {
-			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'plugin-name' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ), 403 );
 		}
 
 		check_admin_referer( self::DELETE_ACTION );
@@ -162,7 +162,7 @@ class DeactivationFlow {
 			: '';
 
 		if ( $confirm !== '1' ) {
-			wp_die( esc_html__( 'Confirmation checkbox was not checked.', 'plugin-name' ), 400 );
+			wp_die( esc_html__( 'Confirmation checkbox was not checked.', 'apermo-notify' ), 400 );
 		}
 
 		$this->cleanup_plugin_data();
@@ -172,8 +172,8 @@ class DeactivationFlow {
 
 		$redirect = add_query_arg(
 			[
-				'deactivate'        => 'true',
-				'plugin_name_wiped' => '1',
+				'deactivate'          => 'true',
+				'apermo_notify_wiped' => '1',
 			],
 			is_network_admin() ? network_admin_url( 'plugins.php' ) : admin_url( 'plugins.php' ),
 		);
@@ -193,9 +193,9 @@ class DeactivationFlow {
 	 * requires iterating sites explicitly.
 	 *
 	 * Example extensions:
-	 * - $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}plugin_name_…" );
-	 * - delete_metadata( 'post', 0, 'plugin_name_…', '', true );
-	 * - $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_plugin_name_%'" );
+	 * - $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}apermo_notify_…" );
+	 * - delete_metadata( 'post', 0, 'apermo_notify_…', '', true );
+	 * - $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_apermo_notify_%'" );
 	 *
 	 * The CSV-export "backup before delete" pattern can also live alongside
 	 * this method as a third option on the confirmation screen — see the
@@ -207,14 +207,14 @@ class DeactivationFlow {
 		if ( is_multisite() && is_plugin_active_for_network( plugin_basename( Main::file() ) ) ) {
 			// Network-activated: site options live in network meta;
 			// `delete_site_option()` works regardless of the current blog.
-			delete_site_option( 'plugin_name_settings' );
+			delete_site_option( 'apermo_notify_settings' );
 
 			/*
 			 * To wipe per-site data on every site, iterate explicitly:
 			 *
 			 *     foreach ( get_sites( [ 'fields' => 'ids' ] ) as $site_id ) {
 			 *         switch_to_blog( $site_id );
-			 *         delete_option( 'plugin_name_per_site_settings' );
+			 *         delete_option( 'apermo_notify_per_site_settings' );
 			 *         restore_current_blog();
 			 *     }
 			 */
@@ -222,6 +222,6 @@ class DeactivationFlow {
 		}
 
 		// Per-site activation or single-site install: delete on the current site.
-		delete_option( 'plugin_name_settings' );
+		delete_option( 'apermo_notify_settings' );
 	}
 }
