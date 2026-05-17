@@ -126,7 +126,7 @@ class Custom_Tables {
 
 		foreach ( $this->tables as $table_name => $create_sql ) {
 			$this->debug_messages[] = 'Creating table ' . $table_name . '...';
-			array_push( $this->debug_messages, ...dbDelta( $create_sql ) );
+			$this->debug_messages   = array_merge( $this->debug_messages, array_values( dbDelta( $create_sql ) ) );
 			$this->debug_messages[] = 'Table ' . $table_name . ' created.';
 		}
 
