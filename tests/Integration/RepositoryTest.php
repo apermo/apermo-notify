@@ -70,12 +70,59 @@ final class RepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Confirms the unique constraint prevents duplicate (target, email) inserts.
+	 * Confirms a re-submit on a pending row resets its token in place rather
+	 * than inserting a duplicate or rejecting the request.
 	 *
 	 * @return void
 	 */
-	public function test_create_pending_returns_zero_for_duplicate(): void {
-		Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+	public function test_create_pending_resets_token_on_pending_duplicate(): void {
+		$first = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+
+		global $wpdb;
+		$token_before = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT token FROM %i WHERE id = %d', Repository::table(), $first ),
+		);
+
+		$second = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+
+		$this->assertSame( $first, $second );
+
+		$token_after = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT token FROM %i WHERE id = %d', Repository::table(), $first ),
+		);
+		$this->assertNotSame( $token_before, $token_after );
+	}
+
+	/**
+	 * Confirms an unsubscribed subscriber can subscribe again to the same target.
+	 *
+	 * @return void
+	 */
+	public function test_create_pending_reactivates_unsubscribed(): void {
+		$first = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+		$token = self::token_for( $first );
+		Repository::confirm( $token );
+		Repository::unsubscribe( $token );
+
+		$second = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+
+		$this->assertSame( $first, $second );
+
+		$row = Repository::find_by_token( self::token_for( $first ) );
+		$this->assertNotNull( $row );
+		$this->assertSame( Subscription::STATUS_PENDING, $row->status );
+		$this->assertNull( $row->confirmed_at );
+	}
+
+	/**
+	 * Confirms a confirmed subscriber re-submitting still gets 0 (duplicate).
+	 *
+	 * @return void
+	 */
+	public function test_create_pending_returns_zero_for_confirmed_duplicate(): void {
+		$first = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
+		Repository::confirm( self::token_for( $first ) );
+
 		$second = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
 
 		$this->assertSame( 0, $second );

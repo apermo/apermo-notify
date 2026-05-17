@@ -24,18 +24,26 @@ final class Repository {
 	}
 
 	/**
-	 * Creates a pending subscription row.
+	 * Creates (or reactivates) a pending subscription row.
 	 *
-	 * Returns 0 if the row already exists for this (target, email) combination.
-	 * Caller is responsible for handling that case (e.g. by re-sending the
-	 * confirm email for an existing pending row).
+	 * Behaviour by existing-row status:
+	 *
+	 * - No existing row → fresh insert, returns the new ID.
+	 * - Existing PENDING → reissues a new token and timestamp, returns the
+	 *   existing ID (so the caller resends the confirmation email and the
+	 *   stale token stops working).
+	 * - Existing UNSUBSCRIBED → reactivates the row back to PENDING with a
+	 *   new token, returns the existing ID. Lets a former subscriber sign
+	 *   up again without manual cleanup.
+	 * - Existing CONFIRMED → returns 0; subscriber is already active and
+	 *   the caller should report this as a duplicate.
 	 *
 	 * @param string $target_type Target type slug.
 	 * @param int    $target_id   Target identifier (or 0).
 	 * @param string $target_meta Secondary target qualifier or empty string.
 	 * @param string $email       Subscriber email (will be normalized).
 	 *
-	 * @return int Newly inserted ID, or 0 if a duplicate row prevented insertion.
+	 * @return int Subscription ID (new or reactivated), 0 when the email is already confirmed for this target.
 	 */
 	public static function create_pending(
 		string $target_type,
@@ -43,9 +51,44 @@ final class Repository {
 		string $target_meta,
 		string $email,
 	): int {
-		global $wpdb;
+		$email     = Token::normalize_email( $email );
+		$token     = Token::generate();
+		$timestamp = current_time( 'mysql', true );
 
-		$token = Token::generate();
+		$new_id = self::insert_pending( $target_type, $target_id, $target_meta, $email, $token, $timestamp );
+		if ( $new_id > 0 ) {
+			return $new_id;
+		}
+
+		$existing = self::find_by_target_email( $target_type, $target_id, $target_meta, $email );
+		if ( $existing === null || $existing->status === Subscription::STATUS_CONFIRMED ) {
+			return $existing === null ? 0 : 0;
+		}
+
+		return self::reset_to_pending( (int) $existing->id, $token, $timestamp );
+	}
+
+	/**
+	 * Inserts a brand new pending row.
+	 *
+	 * @param string $target_type Target type slug.
+	 * @param int    $target_id   Target identifier.
+	 * @param string $target_meta Secondary qualifier.
+	 * @param string $email       Normalized email.
+	 * @param string $token       Generated token.
+	 * @param string $timestamp   MySQL DATETIME (UTC).
+	 *
+	 * @return int New ID, or 0 if the insert failed (typically a unique-key collision).
+	 */
+	private static function insert_pending(
+		string $target_type,
+		int $target_id,
+		string $target_meta,
+		string $email,
+		string $token,
+		string $timestamp,
+	): int {
+		global $wpdb;
 
 		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
@@ -53,19 +96,77 @@ final class Repository {
 				'target_type' => $target_type,
 				'target_id'   => $target_id,
 				'target_meta' => $target_meta,
-				'email'       => Token::normalize_email( $email ),
+				'email'       => $email,
 				'token'       => $token,
 				'status'      => Subscription::STATUS_PENDING,
-				'created_at'  => current_time( 'mysql', true ),
+				'created_at'  => $timestamp,
 			],
 			[ '%s', '%d', '%s', '%s', '%s', '%d', '%s' ],
 		);
 
-		if ( $inserted === false || $inserted === 0 ) {
-			return 0;
-		}
+		return ( \is_int( $inserted ) && $inserted > 0 ) ? (int) $wpdb->insert_id : 0;
+	}
 
-		return (int) $wpdb->insert_id;
+	/**
+	 * Finds a single subscription matching the target/email tuple, regardless of status.
+	 *
+	 * @param string $target_type Target type slug.
+	 * @param int    $target_id   Target identifier.
+	 * @param string $target_meta Secondary qualifier.
+	 * @param string $email       Normalized email.
+	 *
+	 * @return Subscription|null
+	 */
+	private static function find_by_target_email(
+		string $target_type,
+		int $target_id,
+		string $target_meta,
+		string $email,
+	): ?Subscription {
+		global $wpdb;
+
+		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE target_type = %s AND target_id = %d AND target_meta = %s AND email = %s LIMIT 1',
+				self::table(),
+				$target_type,
+				$target_id,
+				$target_meta,
+				$email,
+			),
+			\ARRAY_A,
+		);
+
+		return \is_array( $row ) ? Subscription::from_row( $row ) : null;
+	}
+
+	/**
+	 * Resets an existing row back to PENDING with a fresh token and timestamp.
+	 *
+	 * @param int    $id        Existing subscription ID.
+	 * @param string $token     New token to write.
+	 * @param string $timestamp New `created_at` value.
+	 *
+	 * @return int The same ID.
+	 */
+	private static function reset_to_pending( int $id, string $token, string $timestamp ): int {
+		global $wpdb;
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			[
+				'status'           => Subscription::STATUS_PENDING,
+				'token'            => $token,
+				'created_at'       => $timestamp,
+				'confirmed_at'     => null,
+				'last_notified_at' => null,
+			],
+			[ 'id' => $id ],
+			[ '%d', '%s', '%s', '%s', '%s' ],
+			[ '%d' ],
+		);
+
+		return $id;
 	}
 
 	/**
