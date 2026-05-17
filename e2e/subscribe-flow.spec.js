@@ -74,9 +74,13 @@ test.describe.serial('apermo-notify v0.1 subscribe flow', () => {
     });
 
     test('anonymous visitor sees the form, submits it, sees the pending flash', async ({
-        page,
+        browser,
     }) => {
         test.skip(!postUrl, 'Post URL not captured by the admin step.');
+
+        // Fresh context with no admin storage — exercises the nopriv path.
+        const context = await browser.newContext();
+        const page = await context.newPage();
 
         await page.goto(postUrl);
 
@@ -89,12 +93,19 @@ test.describe.serial('apermo-notify v0.1 subscribe flow', () => {
         await expect(
             page.locator('.apermo-notify-message--pending')
         ).toContainText(/inbox/i);
+
+        await context.close();
     });
 
-    test('subscribe form passes axe-core WCAG 2.1 AA checks', async ({ page }) => {
+    test('subscribe form passes axe-core WCAG 2.1 AA checks', async ({ browser }) => {
         test.skip(!postUrl, 'Post URL not captured by the admin step.');
+
+        const context = await browser.newContext();
+        const page = await context.newPage();
 
         await page.goto(postUrl);
         await expectNoA11yViolations(page);
+
+        await context.close();
     });
 });
