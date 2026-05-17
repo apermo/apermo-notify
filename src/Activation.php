@@ -68,7 +68,7 @@ class Activation {
 
 		$tables->add(
 			self::SUBSCRIPTIONS_TABLE,
-			"CREATE TABLE %1\$s (
+			"CREATE TABLE %s (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				target_type varchar(32) NOT NULL,
 				target_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -85,12 +85,12 @@ class Activation {
 				KEY email (email),
 				KEY token (token),
 				UNIQUE KEY target_email (target_type, target_id, target_meta, email)
-			) %2\$s",
+			) %s",
 		);
 
 		$tables->add(
 			self::SENT_LOG_TABLE,
-			'CREATE TABLE %1$s (
+			'CREATE TABLE %s (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				subscription_id bigint(20) unsigned NOT NULL,
 				post_id bigint(20) unsigned NOT NULL,
@@ -99,7 +99,7 @@ class Activation {
 				PRIMARY KEY  (id),
 				KEY subscription (subscription_id),
 				KEY post_event (post_id, event)
-			) %2$s',
+			) %s',
 		);
 
 		return $tables;
