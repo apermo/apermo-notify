@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Subscription;
 
+\defined( 'ABSPATH' ) || exit();
+
 /**
  * Generates and verifies URL-safe subscription tokens.
  */

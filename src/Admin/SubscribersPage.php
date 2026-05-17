@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Admin;
 
+\defined( 'ABSPATH' ) || exit();
+
 use Apermo\Notify\Subscription\Repository;
 use Apermo\Notify\Subscription\Subscription;
 

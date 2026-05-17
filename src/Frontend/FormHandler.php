@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Frontend;
 
+\defined( 'ABSPATH' ) || exit();
+
 use Apermo\Notify\Mail\Mailer;
 use Apermo\Notify\Subscription\Repository;
 use Apermo\Notify\Subscription\Subscription;

@@ -35,4 +35,17 @@ final class WpdbStub {
 		$this->rows_affected = 1;
 		return 1;
 	}
+
+	/**
+	 * Returns the SQL unchanged — sufficient for the drop_table code path.
+	 *
+	 * @param string $sql      Raw SQL.
+	 * @param mixed  ...$args  Placeholders (ignored).
+	 *
+	 * @return string
+	 */
+	public function prepare( string $sql, mixed ...$args ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		unset( $args );
+		return $sql;
+	}
 }

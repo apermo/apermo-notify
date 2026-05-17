@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Mail;
 
+\defined( 'ABSPATH' ) || exit();
+
 use Apermo\Notify\Subscription\Subscription;
 use WP_Post;
 

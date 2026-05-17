@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify;
 
+\defined( 'ABSPATH' ) || exit();
+
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
 use Apermo\Notify\Admin\PostMetaBox;

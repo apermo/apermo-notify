@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Dispatch;
 
+\defined( 'ABSPATH' ) || exit();
+
 use WP_Post;
 
 /**

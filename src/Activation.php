@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify;
 
+\defined( 'ABSPATH' ) || exit();
+
 use apermo\WPTools\Custom_Tables;
 
 /**

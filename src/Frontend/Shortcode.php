@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Frontend;
 
+\defined( 'ABSPATH' ) || exit();
+
 /**
  * Provides the [apermo_notify] shortcode rendering the subscribe form.
  */

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Apermo\Notify\Admin;
 
+\defined( 'ABSPATH' ) || exit();
+
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Subscription\Repository;
 use WP_Post;

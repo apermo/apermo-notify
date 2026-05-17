@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+defined( 'ABSPATH' ) || exit();
+
 /**
  * Confirmation screen for apermo-notify deactivation.
  *

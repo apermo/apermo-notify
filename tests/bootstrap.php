@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+// Plugin source files guard themselves against direct web access with
+// `defined( 'ABSPATH' ) || exit;`. Unit tests autoload those files without
+// WordPress, so define the constant here to satisfy the guard.
+if ( ! defined( 'ABSPATH' ) ) {
+	define( 'ABSPATH', __DIR__ . '/../' );
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $wp_tests_dir = getenv( 'WP_TESTS_DIR' );
