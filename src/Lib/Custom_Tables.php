@@ -168,7 +168,7 @@ class Custom_Tables {
 	 */
 	public function drop_table( string $table_name ): bool {
 		global $wpdb;
-		$result = $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $table_name );
+		$result = $wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . $table_name ) );
 
 		if ( false === $result ) {
 			throw new Exception( 'Something went wrong while dropping table ' . $table_name . '.' );
