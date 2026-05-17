@@ -43,6 +43,7 @@ final class FormHandlerTest extends WP_UnitTestCase {
 
 		$_POST                  = [];
 		$_GET                   = [];
+		$_REQUEST               = [];
 		$_SERVER['REMOTE_ADDR'] = '203.0.113.10';
 
 		// `FormHandler::handle()` ends in `wp_safe_redirect( … ); exit;`. The
@@ -73,11 +74,16 @@ final class FormHandlerTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_valid_submission_creates_pending_row(): void {
+		$nonce = wp_create_nonce( FormHandler::NONCE_ACTION );
 		$_POST = [
 			'post_id'  => (string) $this->post_id,
 			'email'    => 'visitor@example.tld',
-			'_wpnonce' => wp_create_nonce( FormHandler::NONCE_ACTION ),
+			'_wpnonce' => $nonce,
 		];
+		// `check_admin_referer()` reads `$_REQUEST['_wpnonce']`, not `$_POST['_wpnonce']`.
+		// PHP only mirrors $_POST into $_REQUEST when `request_order` includes it,
+		// which CLI/PHPUnit does not do automatically — set it explicitly.
+		$_REQUEST['_wpnonce'] = $nonce;
 
 		try {
 			( new FormHandler() )->handle();
@@ -99,11 +105,13 @@ final class FormHandlerTest extends WP_UnitTestCase {
 
 		// Different IP so throttle does not interfere.
 		$_SERVER['REMOTE_ADDR'] = '203.0.113.20';
+		$nonce                  = wp_create_nonce( FormHandler::NONCE_ACTION );
 		$_POST                  = [
 			'post_id'  => (string) $this->post_id,
 			'email'    => 'visitor@example.tld',
-			'_wpnonce' => wp_create_nonce( FormHandler::NONCE_ACTION ),
+			'_wpnonce' => $nonce,
 		];
+		$_REQUEST['_wpnonce']   = $nonce;
 
 		try {
 			( new FormHandler() )->handle();
