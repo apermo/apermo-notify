@@ -43,7 +43,11 @@ final class PostMetaBoxTest extends TestCase {
 		Functions\expect( 'add_action' )
 			->twice()
 			->withArgs(
-				static fn ( string $hook ): bool => \in_array( $hook, [ 'add_meta_boxes', 'save_post' ], true ),
+				static fn ( string $hook ): bool => \in_array(
+					$hook,
+					[ 'add_meta_boxes', 'pre_post_update' ],
+					true,
+				),
 			);
 
 		( new PostMetaBox() )->register();

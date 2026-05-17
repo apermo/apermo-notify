@@ -33,7 +33,9 @@ final class PostMetaBox {
 	 */
 	public function register(): void {
 		add_action( 'add_meta_boxes', [ $this, 'add_box' ] );
-		add_action( 'save_post', [ $this, 'on_save' ], 10, 2 );
+		// `pre_post_update` fires before `post_updated`, so the checkbox meta
+		// is in place when `PostHooks::on_updated` decides whether to dispatch.
+		add_action( 'pre_post_update', [ $this, 'on_pre_update' ], 10, 2 );
 	}
 
 	/**
@@ -91,19 +93,24 @@ final class PostMetaBox {
 	}
 
 	/**
-	 * Saves the checkbox state into post meta.
+	 * Persists the checkbox state into post meta before the post UPDATE runs.
 	 *
-	 * @param int     $post_id Post being saved.
-	 * @param WP_Post $post    Post object.
+	 * Hooked to `pre_post_update` rather than `save_post` so the meta is
+	 * already in place when `post_updated` fires (which is where
+	 * {@see PostHooks::on_updated} reads it).
+	 *
+	 * @param int                  $post_id Post being saved.
+	 * @param array<string, mixed> $data    Sanitized post data being written.
 	 *
 	 * @return void
 	 */
-	public function on_save( int $post_id, WP_Post $post ): void {
+	public function on_pre_update( int $post_id, array $data ): void {
 		if ( \defined( 'DOING_AUTOSAVE' ) && \DOING_AUTOSAVE ) {
 			return;
 		}
 
-		if ( ! \in_array( $post->post_type, [ 'post', 'page' ], true ) ) {
+		$post_type = (string) ( $data['post_type'] ?? '' );
+		if ( ! \in_array( $post_type, [ 'post', 'page' ], true ) ) {
 			return;
 		}
 
