@@ -49,9 +49,14 @@ final class PostHooks {
 	 * @return void
 	 */
 	public static function on_updated( int $post_id, WP_Post $post_after, WP_Post $post_before ): void {
-		unset( $post_before );
-
 		if ( $post_after->post_status !== 'publish' ) {
+			return;
+		}
+
+		// Skip the update event on the first publish — `on_transition()` will
+		// fire the publish event for that save; sending both would
+		// double-notify subscribers on the same transition.
+		if ( $post_before->post_status !== 'publish' ) {
 			return;
 		}
 
