@@ -15,6 +15,8 @@ declare(strict_types=1);
 
 namespace apermo\WPTools;
 
+defined( 'ABSPATH' ) || exit;
+
 use Exception;
 
 /**
