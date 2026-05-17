@@ -6,6 +6,7 @@ namespace Apermo\Notify;
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Frontend\Shortcode;
 use Apermo\Notify\Subscription\OptInFlow;
@@ -80,5 +81,6 @@ class Main {
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
 		( new Shortcode() )->register();
+		( new PostHooks() )->register();
 	}
 }
