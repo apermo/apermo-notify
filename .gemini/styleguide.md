@@ -16,7 +16,7 @@ This is a GitHub template repository for bootstrapping WordPress plugins and the
 - Follow the [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/).
 - Use tabs for indentation (not spaces).
 - All files must declare `declare(strict_types=1)`.
-- PSR-4 autoloading under `src/` with the `Apermo_Notify` namespace (placeholder replaced by `setup.sh`).
+- PSR-4 autoloading under `src/` with the `Apermo\Notify` namespace.
 - All user-facing strings must be translatable using `__()`, `_e()`, `esc_html__()`, `esc_html_e()`, `esc_attr__()`, or `esc_attr_e()` with the `apermo-notify` text domain.
 - Translator comments (`/* translators: ... */`) are required before any translation function call that contains placeholders.
 - All output must be properly escaped using `esc_html()`, `esc_attr()`, `esc_url()`, `wp_kses_post()`, etc.
