@@ -82,6 +82,14 @@ final class FormHandler {
 			return;
 		}
 
+		// Anonymous visitors must not be able to discover or subscribe to
+		// drafts, scheduled posts, or private content via a guessed ID, so
+		// gate strictly on `publish` + supported types.
+		if ( $post->post_status !== 'publish' || ! \in_array( $post->post_type, [ 'post', 'page' ], true ) ) {
+			$this->redirect_with_result( $post_id, 'invalid' );
+			return;
+		}
+
 		check_admin_referer( self::NONCE_ACTION );
 
 		$email = $this->require_email();
@@ -98,16 +106,16 @@ final class FormHandler {
 
 		$id = Repository::create_pending( 'post', $post_id, '', $email );
 		if ( $id === 0 ) {
+			// Repository returns 0 only when the email is already CONFIRMED;
+			// pending or unsubscribed rows are reactivated and return >0.
 			$this->redirect_with_result( $post_id, 'duplicate' );
 			return;
 		}
 
 		$subscription = self::reload( $id );
-		if ( $subscription !== null ) {
-			Mailer::send_confirm( $subscription, $post );
-		}
+		$mailed       = $subscription !== null && Mailer::send_confirm( $subscription, $post );
 
-		$this->redirect_with_result( $post_id, 'pending' );
+		$this->redirect_with_result( $post_id, $mailed ? 'pending' : 'mail_failure' );
 	}
 
 	/**
