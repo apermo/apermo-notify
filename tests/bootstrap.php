@@ -2,13 +2,6 @@
 
 declare(strict_types=1);
 
-// Plugin source files guard themselves against direct web access with
-// `defined( 'ABSPATH' ) || exit;`. Unit tests autoload those files without
-// WordPress, so define the constant here to satisfy the guard.
-if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', __DIR__ . '/../' );
-}
-
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $wp_tests_dir = getenv( 'WP_TESTS_DIR' );
@@ -30,6 +23,12 @@ if ( $wp_tests_dir !== false && is_dir( $wp_tests_dir ) ) {
 	tests_add_filter( 'muplugins_loaded', 'apermo_notify_tests_load_project' );
 
 	require_once $wp_tests_dir . '/includes/bootstrap.php';
+} elseif ( ! defined( 'ABSPATH' ) ) {
+	// Unit-test path: WP is not loaded, but src/ files guard themselves with
+	// `defined( 'ABSPATH' ) || exit;`. Define a harmless constant so the guard
+	// passes during autoload. The integration path leaves this to wp-phpunit's
+	// bootstrap, which sets ABSPATH to the real WordPress install root.
+	define( 'ABSPATH', __DIR__ . '/../' );
 }
 
 /**
