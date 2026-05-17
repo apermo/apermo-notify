@@ -2,8 +2,8 @@
  * End-to-end test for the apermo-notify v0.1 subscribe flow.
  *
  * The test:
- *   1. As an admin, creates a published post that contains the
- *      [apermo_notify] shortcode.
+ *   1. As an admin (via the WP REST API + nonce), creates a published post
+ *      that contains the [apermo_notify] shortcode.
  *   2. Visits the post anonymously, submits the subscribe form, and asserts
  *      the success flash message is rendered.
  *   3. Runs axe-core on the subscribe form to catch obvious WCAG violations.
@@ -22,53 +22,34 @@ const ADMIN_STORAGE = '.auth/admin.json';
 test.describe.serial('apermo-notify v0.1 subscribe flow', () => {
     let postUrl;
 
-    test('admin creates a post containing the [apermo_notify] shortcode', async ({
-        browser,
-    }) => {
+    test.beforeAll(async ({ browser }) => {
+        // Use the admin's stored session to call /wp-json/wp/v2/posts. This
+        // bypasses Gutenberg's UI (which renders inside an iframe canvas in
+        // WP 6.3+ and is brittle to drive headlessly).
         const context = await browser.newContext({ storageState: ADMIN_STORAGE });
         const page = await context.newPage();
 
-        await page.goto('/wp-admin/post-new.php');
+        // `wpApiSettings.nonce` is localized on most admin screens — fetch it
+        // from the dashboard, which is the lightest page that includes it.
+        await page.goto('/wp-admin/');
+        const nonce = await page.evaluate(() => window.wpApiSettings && window.wpApiSettings.nonce);
+        expect(nonce, 'REST nonce should be available on /wp-admin/').toBeTruthy();
 
-        // Bail out cleanly if Gutenberg's "welcome guide" or any modal is open
-        // (it intercepts clicks on the title field).
-        const closeWelcome = page.locator(
-            'button[aria-label="Close"], button.components-modal__header-icon'
-        );
-        if (await closeWelcome.first().isVisible().catch(() => false)) {
-            await closeWelcome.first().click().catch(() => undefined);
-        }
-
-        const titleSelector = '[aria-label="Add title"], textarea#title';
-        await page.locator(titleSelector).first().fill('apermo-notify E2E target');
-
-        // Use the classic-editor textarea if present, else Gutenberg's
-        // code-editor mode for a stable HTML insertion path.
-        const classicTextarea = page.locator('textarea#content');
-        if (await classicTextarea.isVisible().catch(() => false)) {
-            await classicTextarea.fill('[apermo_notify]');
-        } else {
-            // Switch to code-editor mode in Gutenberg via keyboard shortcut.
-            await page.keyboard.press('Control+Shift+Alt+M');
-            const codeEditor = page.locator('textarea.editor-post-text-editor');
-            await codeEditor.fill('[apermo_notify]');
-        }
-
-        await page.locator('#publish, button.editor-post-publish-button').first().click();
-
-        // Confirm the second "Publish" button in the Gutenberg pre-publish panel
-        // if it appears.
-        const confirmPublish = page.locator(
-            'button.editor-post-publish-button__button'
-        );
-        if (await confirmPublish.isVisible().catch(() => false)) {
-            await confirmPublish.click();
-        }
-
-        await page.waitForURL(/post=\d+/);
-        const viewLink = page.locator('a:has-text("View post"), a.post-permalink').first();
-        postUrl = await viewLink.getAttribute('href');
-        expect(postUrl).toBeTruthy();
+        const response = await page.request.post('/wp-json/wp/v2/posts', {
+            headers: { 'X-WP-Nonce': nonce },
+            data: {
+                title: 'apermo-notify E2E target',
+                content: '[apermo_notify]',
+                status: 'publish',
+            },
+        });
+        expect(
+            response.ok(),
+            `Expected post creation to succeed, got HTTP ${response.status()}`
+        ).toBeTruthy();
+        const post = await response.json();
+        postUrl = post.link;
+        expect(postUrl, 'REST response should include a permalink').toBeTruthy();
 
         await context.close();
     });
