@@ -6,6 +6,8 @@ namespace Apermo\Notify;
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Admin\PostMetaBox;
+use Apermo\Notify\Admin\SubscribersPage;
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Frontend\Shortcode;
@@ -82,5 +84,10 @@ class Main {
 		( new FormHandler() )->register();
 		( new Shortcode() )->register();
 		( new PostHooks() )->register();
+
+		if ( is_admin() ) {
+			( new PostMetaBox() )->register();
+			( new SubscribersPage() )->register();
+		}
 	}
 }
