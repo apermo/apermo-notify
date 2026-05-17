@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit();
 /**
  * Confirmation screen for apermo-notify deactivation.
  *
- * Variables provided by Apermo_Notify\Admin\DeactivationFlow::render_confirm_page():
+ * Variables provided by Apermo\Notify\Admin\DeactivationFlow::render_confirm_page():
  *
  * @var string $deactivate    Standard WP deactivate URL (with nonce) for the "keep data" path.
  * @var string $delete_url    admin.php URL the destructive form submits to.
