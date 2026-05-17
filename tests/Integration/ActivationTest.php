@@ -20,6 +20,23 @@ use WP_UnitTestCase;
 class ActivationTest extends WP_UnitTestCase {
 
 	/**
+	 * Reports whether a table is queryable from the current connection.
+	 *
+	 * @param string $table Fully-prefixed table name.
+	 *
+	 * @return int|false The row count on success, false on failure.
+	 */
+	private static function table_exists( string $table ): int|false {
+		global $wpdb;
+
+		$previous = $wpdb->suppress_errors( true );
+		$count    = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
+		$wpdb->suppress_errors( $previous );
+
+		return ( $count === null ) ? false : (int) $count;
+	}
+
+	/**
 	 * Drops plugin tables and the version option before each test so we can
 	 * assert activation's create-from-scratch behavior.
 	 *
@@ -43,17 +60,17 @@ class ActivationTest extends WP_UnitTestCase {
 		$subscriptions = $wpdb->prefix . Activation::SUBSCRIPTIONS_TABLE;
 		$sent_log      = $wpdb->prefix . Activation::SENT_LOG_TABLE;
 
-		$all_tables = $wpdb->get_col( 'SHOW TABLES' );
-
-		$this->assertContains(
-			$subscriptions,
-			$all_tables,
-			'Subscriptions table should be created. Actual tables: ' . \implode( ', ', $all_tables ),
+		// WP_UnitTestCase rewrites CREATE TABLE to CREATE TEMPORARY TABLE for
+		// per-test isolation. Temporary tables are not listed by SHOW TABLES,
+		// so verify existence by SELECT-ing from each — that works for both
+		// temporary and persistent tables in the current connection.
+		$this->assertNotFalse(
+			self::table_exists( $subscriptions ),
+			'Subscriptions table should be queryable after activation.',
 		);
-		$this->assertContains(
-			$sent_log,
-			$all_tables,
-			'Sent-log table should be created. Actual tables: ' . \implode( ', ', $all_tables ),
+		$this->assertNotFalse(
+			self::table_exists( $sent_log ),
+			'Sent-log table should be queryable after activation.',
 		);
 	}
 
@@ -86,11 +103,13 @@ class ActivationTest extends WP_UnitTestCase {
 		$subscriptions = $wpdb->prefix . Activation::SUBSCRIPTIONS_TABLE;
 		$sent_log      = $wpdb->prefix . Activation::SENT_LOG_TABLE;
 
-		$this->assertNull(
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriptions ) ),
+		$this->assertFalse(
+			self::table_exists( $subscriptions ),
+			'Subscriptions table should no longer be queryable.',
 		);
-		$this->assertNull(
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sent_log ) ),
+		$this->assertFalse(
+			self::table_exists( $sent_log ),
+			'Sent-log table should no longer be queryable.',
 		);
 		$this->assertFalse( get_option( Activation::VERSION_OPTION ) );
 	}
