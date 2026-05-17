@@ -62,12 +62,26 @@ final class SubscribersPage {
 		if ( $row->target_type === 'post' ) {
 			$post = get_post( $row->target_id );
 			if ( $post !== null ) {
-				return \sprintf( '%s (#%d)', $post->post_title, $row->target_id );
+				return \sprintf(
+					/* translators: 1: post title, 2: post ID */
+					__( '%1$s (#%2$d)', 'apermo-notify' ),
+					$post->post_title,
+					$row->target_id,
+				);
 			}
-			return \sprintf( 'post #%d', $row->target_id );
+			return \sprintf(
+				/* translators: %d: post ID */
+				__( 'post #%d', 'apermo-notify' ),
+				$row->target_id,
+			);
 		}
 
-		return $row->target_type . ' #' . $row->target_id;
+		return \sprintf(
+			/* translators: 1: target type slug, 2: target identifier */
+			__( '%1$s #%2$d', 'apermo-notify' ),
+			$row->target_type,
+			$row->target_id,
+		);
 	}
 
 	/**
