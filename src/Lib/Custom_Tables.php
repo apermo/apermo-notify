@@ -152,12 +152,19 @@ class Custom_Tables {
 	 */
 	public function clear_debug_messages(): int {
 		global $wpdb;
-		$num_rows = $wpdb->delete( $wpdb->options, [ 'option_name' => $this->version_key . '_debug_%' ] );
+
+		$num_rows = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( $this->version_key . '_debug_' ) . '%'
+			)
+		);
+
 		if ( false === $num_rows ) {
 			throw new Exception( 'Something went wrong while deleting debug messages.' );
 		}
 
-		return $num_rows;
+		return (int) $num_rows;
 	}
 
 	/**
