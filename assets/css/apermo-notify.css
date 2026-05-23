@@ -1,61 +1,39 @@
 /*!
  * Apermo Notify — subscribe form
  *
- * Minimal, theme-friendly defaults. Selectors are wrapped in `:where()` to keep
- * specificity at zero so themes can override every property without
+ * Visually mirrors the WordPress comment form: no card chrome, inputs and
+ * labels inherit the theme's typography. Selectors are wrapped in `:where()`
+ * to keep specificity at zero so themes can override every property without
  * `!important`. Themes that want full control can drop this stylesheet
- * entirely with `add_filter( 'apermo_notify_enqueue_styles', '__return_false' )`.
+ * entirely with `wp_dequeue_style( 'apermo-notify' )`.
  */
 
 :where(.apermo-notify-form) {
 	margin-block: 1.5em;
-	padding: 1.25em 1.5em;
-	background-color: color-mix(in srgb, currentColor 4%, transparent);
-	border-radius: 0.5em;
-	border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 }
 
 :where(.apermo-notify-form__intro) {
 	margin-block: 0 1em;
-	color: inherit;
 }
 
 :where(.apermo-notify-form__field) {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4em;
 	margin-block-end: 1em;
 }
 
 :where(.apermo-notify-form__label) {
-	font-weight: 600;
+	display: block;
+	margin-block-end: 0.25em;
 }
 
 :where(.apermo-notify-form__input) {
 	width: 100%;
-	max-width: 28em;
-	padding: 0.55em 0.75em;
-	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-	border-radius: 0.25em;
-	background: transparent;
-	color: inherit;
-	font: inherit;
-}
-
-:where(.apermo-notify-form__input:focus) {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
+	max-width: 24em;
 }
 
 :where(.apermo-notify-form__actions) {
-	margin-block-start: 0.5em;
+	margin-block-start: 0.75em;
 }
 
-/*
- * The submit button intentionally has no `:where()` background/color rules.
- * It carries `wp-block-button__link` so block-themed sites style it for free;
- * classic themes that target `<button>` keep working untouched.
- */
 :where(.apermo-notify-form__submit) {
 	cursor: pointer;
 }
