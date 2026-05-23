@@ -36,7 +36,7 @@ final class FormRenderer {
 		\ob_start();
 		?>
 		<form
-			class="apermo-notify-form comment-form"
+			class="apermo-notify-form"
 			method="post"
 			action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 		>

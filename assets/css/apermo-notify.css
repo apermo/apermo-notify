@@ -1,35 +1,51 @@
 /*!
  * Apermo Notify — subscribe form
  *
- * Carries the standard `comment-form` / `comment-form-email` / `form-submit`
- * structural classes so themes that already style WordPress's comment form
- * style this one for free. Selectors use `:where()` to keep specificity at
- * zero; themes override every property without `!important`. Drop the
- * stylesheet entirely with `wp_dequeue_style( 'apermo-notify' )` in a theme
- * hook.
+ * A small card with its own typography cascade so theme-inherited heading
+ * scales don't blow up the label or input. Every selector is wrapped in
+ * `:where()` (specificity 0) so themes override every property without
+ * `!important`. Drop the stylesheet entirely with
+ * `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
  */
 
 :where(.apermo-notify-form) {
 	margin-block: 1.5em;
+	padding: 1.25em 1.5em;
 	max-width: 32em;
+	background-color: color-mix(in srgb, currentColor 4%, transparent);
+	border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+	border-radius: 0.5em;
+	/* Reset the cascade — post-content typography in many themes scales
+	 * everything inside `entry-content`, which made the label and input
+	 * render at heading-like sizes. */
+	font-size: 1rem;
+	line-height: 1.5;
 }
 
 :where(.apermo-notify-form__intro) {
 	margin-block: 0 1em;
+	font-size: inherit;
 }
 
-/*
- * Themes often scope their input styles to `#commentform input[...]` so
- * the cascade doesn't reach this form's input. Provide usable defaults
- * at specificity 0 — themes that style `input[type="email"]` globally still
- * win automatically.
- */
+:where(.apermo-notify-form__field) {
+	display: block;
+	margin-block-end: 1em;
+}
+
+:where(.apermo-notify-form__label) {
+	display: block;
+	margin-block-end: 0.25em;
+	font-size: 0.875em;
+	font-weight: 400;
+	line-height: 1.3;
+}
+
 :where(.apermo-notify-form__input) {
 	width: 100%;
-	padding: 0.6em 0.75em;
+	padding: 0.55em 0.75em;
 	font: inherit;
 	color: inherit;
-	background: transparent;
+	background: color-mix(in srgb, currentColor 2%, white);
 	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 	border-radius: 0.25em;
 }
@@ -39,10 +55,14 @@
 	outline-offset: 2px;
 }
 
-/*
- * Flash messages — the comment-form cascade doesn't cover these because
- * comments use their own moderation/error flow.
- */
+:where(.apermo-notify-form__actions) {
+	margin-block-start: 0.75em;
+}
+
+:where(.apermo-notify-form__submit) {
+	cursor: pointer;
+}
+
 :where(.apermo-notify-message) {
 	margin-block-start: 1em;
 	padding: 0.6em 0.9em;
