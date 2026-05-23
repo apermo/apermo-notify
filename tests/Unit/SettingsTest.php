@@ -89,6 +89,9 @@ final class SettingsTest extends TestCase {
 					'enabled_post_types'  => [ 'post', 'page' ],
 					'auto_append_default' => true,
 					'subscription_text'   => 'Hello visitors',
+					'stale_after_months'  => 12,
+					'prune_mode'          => Settings::PRUNE_MODE_DELETE,
+					'stale_grace_days'    => 14,
 				],
 				false,
 			);
@@ -98,6 +101,9 @@ final class SettingsTest extends TestCase {
 				'enabled_post_types'  => [ 'post', 'page', '', 'post' ],
 				'auto_append_default' => '1',
 				'subscription_text'   => 'Hello visitors',
+				'stale_after_months'  => '12',
+				'prune_mode'          => Settings::PRUNE_MODE_DELETE,
+				'stale_grace_days'    => '14',
 			],
 		);
 	}
@@ -118,10 +124,34 @@ final class SettingsTest extends TestCase {
 					'enabled_post_types'  => [ 'post' ],
 					'auto_append_default' => false,
 					'subscription_text'   => '',
+					'stale_after_months'  => 6,
+					'prune_mode'          => Settings::PRUNE_MODE_KEEP_ALIVE,
+					'stale_grace_days'    => 7,
 				],
 				false,
 			);
 
 		Settings::save( [ 'enabled_post_types' => [ 'post' ] ] );
+	}
+
+	/**
+	 * Confirms save() rejects an out-of-range stale_after_months value.
+	 *
+	 * @return void
+	 */
+	public function test_save_clamps_unknown_stale_after(): void {
+		Functions\when( 'sanitize_key' )->returnArg( 1 );
+		Functions\when( 'wp_kses_post' )->returnArg( 1 );
+		Functions\expect( 'update_option' )
+			->once()
+			->withArgs(
+				static function ( $key, $value ): bool {
+					return $key === Settings::OPTION
+						&& \is_array( $value )
+						&& $value['stale_after_months'] === 6;
+				},
+			);
+
+		Settings::save( [ 'stale_after_months' => 999 ] );
 	}
 }
