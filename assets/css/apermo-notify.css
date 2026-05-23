@@ -1,11 +1,12 @@
 /*!
  * Apermo Notify — subscribe form
  *
- * Targets the same structure the WordPress comment form uses (label inside a
- * `<p>` ahead of an input) so themes that style the comment form already
- * style this one too. Selectors use `:where()` to keep specificity at zero;
- * themes override every property without `!important`. Drop the stylesheet
- * entirely with `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
+ * Carries the standard `comment-form` / `comment-form-email` / `form-submit`
+ * structural classes so themes that already style WordPress's comment form
+ * style this one for free. Selectors use `:where()` to keep specificity at
+ * zero; themes override every property without `!important`. Drop the
+ * stylesheet entirely with `wp_dequeue_style( 'apermo-notify' )` in a theme
+ * hook.
  */
 
 :where(.apermo-notify-form) {
@@ -17,47 +18,10 @@
 	margin-block: 0 1em;
 }
 
-:where(.apermo-notify-form__field) {
-	display: block;
-	margin-block-end: 1em;
-}
-
-/* Reset any wp-block-form-input-label cascade so the label matches body text. */
-:where(.apermo-notify-form__label) {
-	display: block;
-	margin-block-end: 0.25em;
-	font-size: inherit;
-	font-weight: inherit;
-	line-height: inherit;
-}
-
 /*
- * Bare-minimum input styling — themes that style `input[type="email"]`
- * globally (most modern themes) win automatically thanks to `:where()`.
+ * Flash messages — the comment-form cascade doesn't cover these because
+ * comments use their own moderation/error flow.
  */
-:where(.apermo-notify-form__input) {
-	width: 100%;
-	padding: 0.55em 0.75em;
-	font: inherit;
-	color: inherit;
-	background: transparent;
-	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-	border-radius: 0.25em;
-}
-
-:where(.apermo-notify-form__input:focus) {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
-}
-
-:where(.apermo-notify-form__actions) {
-	margin-block-start: 0.75em;
-}
-
-:where(.apermo-notify-form__submit) {
-	cursor: pointer;
-}
-
 :where(.apermo-notify-message) {
 	margin-block-start: 1em;
 	padding: 0.6em 0.9em;

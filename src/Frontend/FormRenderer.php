@@ -36,7 +36,7 @@ final class FormRenderer {
 		\ob_start();
 		?>
 		<form
-			class="apermo-notify-form"
+			class="apermo-notify-form comment-form"
 			method="post"
 			action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 		>
@@ -107,10 +107,10 @@ final class FormRenderer {
 	 * @return void
 	 */
 	private static function render_submit(): void {
-		echo '<div class="apermo-notify-form__actions wp-block-button">'
-			. '<button class="apermo-notify-form__submit wp-block-button__link" type="submit">'
+		echo '<p class="apermo-notify-form__actions form-submit">'
+			. '<button class="apermo-notify-form__submit submit wp-block-button__link" type="submit">'
 			. esc_html__( 'Notify me about updates', 'apermo-notify' )
-			. '</button></div>';
+			. '</button></p>';
 	}
 
 	/**
