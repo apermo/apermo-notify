@@ -245,17 +245,23 @@ final class ManagePage {
 	}
 
 	/**
-	 * Prints a single subscription row.
+	 * Prints a single subscription row with the date the subscriber
+	 * confirmed plus the related post's publish and last-modified dates.
 	 *
 	 * @param Subscription $row Confirmed subscription.
 	 *
 	 * @return void
 	 */
 	private static function render_row( Subscription $row ): void {
-		$title = '';
+		$post = null;
 		if ( $row->target_type === 'post' && $row->target_id > 0 ) {
-			$title = (string) get_the_title( $row->target_id );
+			$candidate = get_post( $row->target_id );
+			if ( $candidate instanceof WP_Post ) {
+				$post = $candidate;
+			}
 		}
+
+		$title = $post instanceof WP_Post ? (string) get_the_title( $post ) : '';
 		if ( $title === '' ) {
 			/* translators: %d: subscription primary key */
 			$title = \sprintf( __( 'Subscription #%d', 'apermo-notify' ), $row->id );
@@ -267,9 +273,99 @@ final class ManagePage {
 		echo '<label class="apermo-notify-form__label" for="' . esc_attr( $input_id ) . '">';
 		echo '<input type="checkbox" id="' . esc_attr( $input_id ) . '" name="ids[]" value="'
 			. esc_attr( (string) $row->id ) . '" /> ';
-		echo esc_html( $title );
+
+		echo '<span class="apermo-notify-manage__title">';
+		if ( $post instanceof WP_Post ) {
+			$permalink = (string) get_permalink( $post );
+			if ( $permalink !== '' ) {
+				echo '<a href="' . esc_url( $permalink ) . '">' . esc_html( $title ) . '</a>';
+			} else {
+				echo esc_html( $title );
+			}
+		} else {
+			echo esc_html( $title );
+		}
+		echo '</span>';
+
+		self::render_row_meta( $row, $post );
+
 		echo '</label>';
 		echo '</li>';
+	}
+
+	/**
+	 * Prints the meta list (subscribed-since, post published, last updated)
+	 * beneath a single subscription row.
+	 *
+	 * @param Subscription $row  Subscription.
+	 * @param WP_Post|null $post Related post when it still exists.
+	 *
+	 * @return void
+	 */
+	private static function render_row_meta( Subscription $row, ?WP_Post $post ): void {
+		$subscribed_since = self::format_datetime( $row->confirmed_at ?? $row->created_at );
+		$post_published   = $post instanceof WP_Post ? self::format_datetime( $post->post_date_gmt ) : '';
+		$post_modified    = $post instanceof WP_Post ? self::format_datetime( $post->post_modified_gmt ) : '';
+
+		echo '<ul class="apermo-notify-manage__meta">';
+
+		if ( $subscribed_since !== '' ) {
+			echo '<li class="apermo-notify-manage__meta-item apermo-notify-manage__meta-item--subscribed-since">'
+				. \sprintf(
+					/* translators: %s: date the visitor confirmed the subscription */
+					esc_html__( 'Subscribed since %s', 'apermo-notify' ),
+					'<time datetime="' . esc_attr( $row->confirmed_at ?? $row->created_at ) . '">'
+						. esc_html( $subscribed_since ) . '</time>',
+				)
+				. '</li>';
+		}
+
+		if ( $post_published !== '' ) {
+			echo '<li class="apermo-notify-manage__meta-item apermo-notify-manage__meta-item--published">'
+				. \sprintf(
+					/* translators: %s: date the post was first published */
+					esc_html__( 'Published %s', 'apermo-notify' ),
+					'<time datetime="' . esc_attr( $post->post_date_gmt ?? '' ) . '">'
+						. esc_html( $post_published ) . '</time>',
+				)
+				. '</li>';
+		}
+
+		if ( $post_modified !== '' && $post_modified !== $post_published ) {
+			echo '<li class="apermo-notify-manage__meta-item apermo-notify-manage__meta-item--modified">'
+				. \sprintf(
+					/* translators: %s: date the post was last updated */
+					esc_html__( 'Last updated %s', 'apermo-notify' ),
+					'<time datetime="' . esc_attr( $post->post_modified_gmt ?? '' ) . '">'
+						. esc_html( $post_modified ) . '</time>',
+				)
+				. '</li>';
+		}
+
+		echo '</ul>';
+	}
+
+	/**
+	 * Formats a MySQL UTC datetime through the site's locale-aware
+	 * date+time formatter. Returns an empty string for null / unparsable input.
+	 *
+	 * @param string|null $mysql_datetime DATETIME in UTC, e.g. `2026-05-23 21:57:14`.
+	 *
+	 * @return string
+	 */
+	private static function format_datetime( ?string $mysql_datetime ): string {
+		if ( $mysql_datetime === null || $mysql_datetime === '' ) {
+			return '';
+		}
+		$timestamp = \strtotime( $mysql_datetime . ' UTC' );
+		if ( $timestamp === false ) {
+			return '';
+		}
+
+		$format = (string) get_option( 'date_format', 'Y-m-d' )
+			. ' ' . (string) get_option( 'time_format', 'H:i' );
+
+		return date_i18n( $format, $timestamp );
 	}
 
 	/**
