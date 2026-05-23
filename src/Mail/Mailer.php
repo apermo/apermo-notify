@@ -25,6 +25,16 @@ final class Mailer {
 	public const ACTION_UNSUBSCRIBE = 'apermo_notify_unsubscribe';
 
 	/**
+	 * admin-post.php action name for the keep-alive link sent on staleness.
+	 */
+	public const ACTION_KEEP_ALIVE = 'apermo_notify_keep_alive';
+
+	/**
+	 * front-of-site action used by the manage-subscriptions page.
+	 */
+	public const ACTION_MANAGE = 'apermo_notify_manage';
+
+	/**
 	 * Sends the double opt-in confirmation email.
 	 *
 	 * @param Subscription $subscription The pending subscription.
@@ -66,6 +76,7 @@ final class Mailer {
 	 */
 	public static function send_update( Subscription $subscription, WP_Post $post, string $event ): bool {
 		$unsubscribe_url = self::action_url( self::ACTION_UNSUBSCRIBE, $subscription->token );
+		$manage_url      = self::manage_url( $subscription->token );
 		$permalink       = get_permalink( $post );
 		if ( ! \is_string( $permalink ) ) {
 			$permalink = '';
@@ -83,7 +94,73 @@ final class Mailer {
 			$subscription,
 			$post,
 			$event,
-			self::render_update_body( $post, $permalink, $unsubscribe_url, $event ),
+			self::render_update_body( $post, $permalink, $unsubscribe_url, $manage_url, $event ),
+		);
+
+		return self::send( $subscription->email, $subject, $body );
+	}
+
+	/**
+	 * Sends a heads-up to an already-confirmed subscriber when someone (maybe
+	 * them, maybe a harvester) re-submits their address on the same target.
+	 *
+	 * @param Subscription $subscription Existing confirmed subscription.
+	 * @param WP_Post      $post         Post the resubmit targeted.
+	 *
+	 * @return bool
+	 */
+	public static function send_already_subscribed( Subscription $subscription, WP_Post $post ): bool {
+		$manage_url      = self::manage_url( $subscription->token );
+		$unsubscribe_url = self::action_url( self::ACTION_UNSUBSCRIBE, $subscription->token );
+
+		$subject = self::subject_for(
+			'already_subscribed',
+			$subscription,
+			$post,
+			'publish',
+			/* translators: %s: post title */
+			\sprintf( __( 'You\'re already subscribed to "%s"', 'apermo-notify' ), $post->post_title ),
+		);
+
+		$body = self::body_for(
+			'already_subscribed',
+			$subscription,
+			$post,
+			'publish',
+			self::render_already_subscribed_body( $post, $manage_url, $unsubscribe_url ),
+		);
+
+		return self::send( $subscription->email, $subject, $body );
+	}
+
+	/**
+	 * Sends the keep-alive warning when a subscription has gone stale.
+	 *
+	 * @param Subscription $subscription Stale confirmed subscription.
+	 * @param WP_Post|null $post         Subscribed post if it still exists.
+	 * @param int          $grace_days   Number of days until the row is deleted if ignored.
+	 *
+	 * @return bool
+	 */
+	public static function send_stale_warning( Subscription $subscription, ?WP_Post $post, int $grace_days ): bool {
+		$keep_alive_url = self::action_url( self::ACTION_KEEP_ALIVE, $subscription->token );
+		$manage_url     = self::manage_url( $subscription->token );
+		$post_title     = $post instanceof WP_Post ? $post->post_title : '';
+
+		$subject = self::subject_for(
+			'stale_warning',
+			$subscription,
+			$post ?? new WP_Post( (object) [] ), // phpcs:ignore Apermo.PHP.ForbiddenObjectCast.Found -- WP_Post::__construct needs an object; stub keeps the filter signature uniform when the source post has been deleted.
+			'publish',
+			__( 'Do you still want notifications from this site?', 'apermo-notify' ),
+		);
+
+		$body = self::body_for(
+			'stale_warning',
+			$subscription,
+			$post ?? new WP_Post( (object) [] ), // phpcs:ignore Apermo.PHP.ForbiddenObjectCast.Found -- WP_Post::__construct needs an object; stub keeps the filter signature uniform when the source post has been deleted.
+			'publish',
+			self::render_stale_warning_body( $post_title, $keep_alive_url, $manage_url, $grace_days ),
 		);
 
 		return self::send( $subscription->email, $subject, $body );
@@ -104,6 +181,26 @@ final class Mailer {
 				'token'  => $token,
 			],
 			admin_url( 'admin-post.php' ),
+		);
+	}
+
+	/**
+	 * Builds the front-of-site URL that opens the per-email manage page.
+	 *
+	 * Lives on `home_url()` rather than `admin-post.php` because the manage
+	 * page is rendered for anonymous visitors via `template_redirect`.
+	 *
+	 * @param string $token Subscription token used to identify the email.
+	 *
+	 * @return string
+	 */
+	public static function manage_url( string $token ): string {
+		return add_query_arg(
+			[
+				'action' => self::ACTION_MANAGE,
+				'token'  => $token,
+			],
+			home_url( '/' ),
 		);
 	}
 
@@ -210,11 +307,65 @@ final class Mailer {
 	}
 
 	/**
+	 * Renders the body for the already-subscribed reassurance email.
+	 *
+	 * @param WP_Post $post            Post the resubmit targeted.
+	 * @param string  $manage_url      URL to the manage page.
+	 * @param string  $unsubscribe_url URL to one-click unsubscribe from this post.
+	 *
+	 * @return string
+	 */
+	private static function render_already_subscribed_body( WP_Post $post, string $manage_url, string $unsubscribe_url ): string {
+		return \sprintf(
+			/* translators: 1: post title, 2: manage URL, 3: unsubscribe URL */
+			__(
+				"Someone tried to subscribe this address to:\n\n%1\$s\n\nYou're already on the list, so nothing changed. If it was you, no action needed — you'll keep getting update notifications.\n\nTo manage every subscription you have on this site:\n%2\$s\n\nTo unsubscribe from this post only:\n%3\$s",
+				'apermo-notify',
+			),
+			$post->post_title,
+			$manage_url,
+			$unsubscribe_url,
+		);
+	}
+
+	/**
+	 * Renders the body for the stale-warning email.
+	 *
+	 * @param string $post_title     Subscribed post title, possibly empty.
+	 * @param string $keep_alive_url URL that resets the keep-alive timestamp.
+	 * @param string $manage_url     URL to the manage page.
+	 * @param int    $grace_days     Days until the row is deleted if ignored.
+	 *
+	 * @return string
+	 */
+	private static function render_stale_warning_body( string $post_title, string $keep_alive_url, string $manage_url, int $grace_days ): string {
+		$intro = $post_title !== ''
+			/* translators: %s: post title */
+			? \sprintf( __( 'You\'re subscribed to updates of "%s".', 'apermo-notify' ), $post_title )
+			: __( 'You\'re subscribed to update notifications on this site.', 'apermo-notify' );
+
+		return \sprintf(
+			/* translators: 1: intro line, 2: grace-period days, 3: keep-alive URL, 4: manage URL */
+			_n(
+				"%1\$s\n\nIt's been a while since you last interacted with it. If you'd still like to receive notifications, click this link within %2\$d day:\n\n%3\$s\n\nOtherwise the subscription will be removed automatically.\n\nTo manage all your subscriptions on this site:\n%4\$s",
+				"%1\$s\n\nIt's been a while since you last interacted with it. If you'd still like to receive notifications, click this link within %2\$d days:\n\n%3\$s\n\nOtherwise the subscription will be removed automatically.\n\nTo manage all your subscriptions on this site:\n%4\$s",
+				$grace_days,
+				'apermo-notify',
+			),
+			$intro,
+			$grace_days,
+			$keep_alive_url,
+			$manage_url,
+		);
+	}
+
+	/**
 	 * Renders the default plain-text body for the update email.
 	 *
 	 * @param WP_Post $post            Updated post.
 	 * @param string  $permalink       Public URL for the post.
 	 * @param string  $unsubscribe_url One-click unsubscribe URL.
+	 * @param string  $manage_url      Manage-all URL.
 	 * @param string  $event           'publish' or 'update'.
 	 *
 	 * @return string
@@ -223,6 +374,7 @@ final class Mailer {
 		WP_Post $post,
 		string $permalink,
 		string $unsubscribe_url,
+		string $manage_url,
 		string $event,
 	): string {
 		$intro = $event === 'publish'
@@ -232,14 +384,15 @@ final class Mailer {
 			: \sprintf( __( 'A post you follow was updated: %s', 'apermo-notify' ), $post->post_title );
 
 		return \sprintf(
-			/* translators: 1: intro line, 2: permalink, 3: unsubscribe URL */
+			/* translators: 1: intro line, 2: permalink, 3: unsubscribe URL, 4: manage URL */
 			__(
-				"%1\$s\n\nRead it here:\n%2\$s\n\nTo stop receiving these updates, open this link:\n%3\$s",
+				"%1\$s\n\nRead it here:\n%2\$s\n\nTo stop receiving updates for this post:\n%3\$s\n\nTo manage every subscription you have on this site:\n%4\$s",
 				'apermo-notify',
 			),
 			$intro,
 			$permalink,
 			$unsubscribe_url,
+			$manage_url,
 		);
 	}
 
