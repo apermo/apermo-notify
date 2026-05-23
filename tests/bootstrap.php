@@ -23,6 +23,15 @@ if ( $wp_tests_dir !== false && is_dir( $wp_tests_dir ) ) {
 	tests_add_filter( 'muplugins_loaded', 'apermo_notify_tests_load_project' );
 
 	require_once $wp_tests_dir . '/includes/bootstrap.php';
+
+	// WP's bootstrap fires `init`, which triggers Activation::maybe_upgrade
+	// and creates the plugin's tables as REAL (non-temporary) tables — the
+	// `_create_temporary_tables` filter isn't active yet at that point.
+	// WP_UnitTestCase later swaps every CREATE/DROP through that filter for
+	// per-test isolation, so the real table never gets dropped from inside
+	// a test and the "drop_all removes tables" assertion fails. Drop the
+	// bootstrap-created real table here, before any test runs.
+	\Apermo\Notify\Activation::drop_all();
 } else {
 	// Unit-test path: WP is not loaded, but src/ files guard themselves with
 	// `defined( 'ABSPATH' ) || exit;`. Define a harmless constant so the guard
