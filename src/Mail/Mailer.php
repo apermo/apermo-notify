@@ -6,6 +6,7 @@ namespace Apermo\Notify\Mail;
 
 \defined( 'ABSPATH' ) || exit();
 
+use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Subscription;
 use WP_Post;
 
@@ -256,16 +257,31 @@ final class Mailer {
 	}
 
 	/**
-	 * Builds the front-of-site URL that opens the per-email manage page.
+	 * Builds the URL that opens the per-email manage page for a token.
 	 *
-	 * Lives on `home_url()` rather than `admin-post.php` because the manage
-	 * page is rendered for anonymous visitors via `template_redirect`.
+	 * Resolves the configured Subscription Management page from settings
+	 * and appends `?token=…` to its permalink. Falls back to the legacy
+	 * home-URL query shape (`/?action=apermo_notify_manage&token=…`) when
+	 * the option is unset or the target page isn't published — so that
+	 * already-sent emails still resolve to something useful and the admin
+	 * notice catches the misconfiguration.
 	 *
 	 * @param string $token Subscription token used to identify the email.
 	 *
 	 * @return string
 	 */
 	public static function manage_url( string $token ): string {
+		$page_id = Settings::manage_page_id();
+		if ( $page_id > 0 ) {
+			$page = get_post( $page_id );
+			if ( $page instanceof WP_Post && $page->post_status === 'publish' ) {
+				$permalink = get_permalink( $page );
+				if ( \is_string( $permalink ) && $permalink !== '' ) {
+					return add_query_arg( 'token', $token, $permalink );
+				}
+			}
+		}
+
 		return add_query_arg(
 			[
 				'action' => self::ACTION_MANAGE,
