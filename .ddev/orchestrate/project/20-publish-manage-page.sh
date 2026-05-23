@@ -65,7 +65,7 @@ publish_for_site() {
             --post_name='manage-subscriptions' \
             --post_status=publish \
             --post_author="$author_id" \
-            --post_content='<!-- wp:paragraph --><p>Visit this page via the link in any of your notification emails to manage your subscriptions.</p><!-- /wp:paragraph -->' \
+            --post_content='<!-- wp:paragraph --><p>Visit this page via the link in any of your notification emails to manage your subscriptions.</p><!-- /wp:paragraph --><!-- wp:apermo-notify/manage-subscriptions /-->' \
             --porcelain \
             "${site_args[@]}" --path="${WP_PATH}")"
         echo "Created manage-subscriptions page (ID ${page_id})."
