@@ -6,23 +6,24 @@ namespace Apermo\Notify\Frontend;
 
 \defined( 'ABSPATH' ) || exit();
 
+use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Repository;
 use Apermo\Notify\Subscription\Subscription;
 
 /**
- * Renders the per-email "manage all my subscriptions" page and handles the
- * bulk-unsubscribe POST submitted from it.
+ * Renders the per-email manage UI inside the page the admin configured as
+ * the Subscription Management page.
  *
- * The page is reached via a token-bearing URL emailed to every confirmed
- * subscriber. The token identifies an email address; from it we list every
- * confirmed subscription that address owns and offer per-row checkboxes.
+ * The admin picks a real published page in the plugin settings; on that
+ * page only, this class hooks `the_content` and replaces the rendered
+ * body with the manage UI whenever a valid `token` query var is present.
+ * Header, footer, sidebars — anything the active theme renders around
+ * the page content — keeps working.
+ *
+ * The bulk-unsubscribe form posts to admin-post.php and lands back on
+ * the same page with `apermo_notify_result=managed`.
  */
 final class ManagePage {
-
-	/**
-	 * Query var used to invoke the manage page from the front-of-site router.
-	 */
-	public const ACTION = 'apermo_notify_manage';
 
 	/**
 	 * admin-post.php action name for the bulk-unsubscribe submission.
@@ -35,27 +36,38 @@ final class ManagePage {
 	public const NONCE_ACTION = 'apermo_notify_manage_nonce';
 
 	/**
-	 * Registers the render hook and the POST handler endpoints.
+	 * Wires the content filter and the POST handlers.
 	 *
 	 * @return void
 	 */
 	public function register(): void {
-		add_action( 'template_redirect', [ $this, 'maybe_render' ] );
+		add_filter( 'the_content', [ $this, 'filter_content' ], 20 );
 		add_action( 'admin_post_nopriv_' . self::POST_ACTION, [ $this, 'handle_post' ] );
 		add_action( 'admin_post_' . self::POST_ACTION, [ $this, 'handle_post' ] );
 	}
 
 	/**
-	 * Intercepts front-end requests carrying the manage action query var and
-	 * renders the page in place of the normal template.
+	 * Replaces the rendered page content with the manage UI on the
+	 * configured page when a `token` query var is present.
 	 *
-	 * @return void
+	 * @param string $content Original content.
+	 *
+	 * @return string
 	 */
-	public function maybe_render(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Token-gated, read-only render.
-		if ( ! isset( $_GET['action'] ) || $_GET['action'] !== self::ACTION ) {
-			return;
+	public function filter_content( string $content ): string {
+		if ( ! is_singular() || ! in_the_loop() || ! is_main_query() ) {
+			return $content;
 		}
+
+		$page_id    = Settings::manage_page_id();
+		$current_id = isset( $GLOBALS['post'] ) && \is_object( $GLOBALS['post'] ) && isset( $GLOBALS['post']->ID )
+			? (int) $GLOBALS['post']->ID
+			: 0;
+		if ( $page_id <= 0 || $current_id !== $page_id ) {
+			return $content;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Token in the query string is the credential.
 		$token = isset( $_GET['token'] ) && \is_string( $_GET['token'] )
 			? sanitize_text_field( wp_unslash( $_GET['token'] ) )
 			: '';
@@ -64,15 +76,18 @@ final class ManagePage {
 			: '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		$owner = $token !== '' ? Repository::find_by_token( $token ) : null;
+		if ( $token === '' ) {
+			return $content;
+		}
+
+		$owner = Repository::find_by_token( $token );
 		if ( $owner === null ) {
-			$this->render_error_page();
-			exit();
+			return $content . $this->render_invalid_token_block();
 		}
 
 		$rows = Repository::find_confirmed_by_email( $owner->email );
-		$this->render_page( $token, $owner->email, $rows, $flash );
-		exit();
+
+		return $content . $this->render_manage_block( $token, $owner->email, $rows, $flash );
 	}
 
 	/**
@@ -100,16 +115,7 @@ final class ManagePage {
 			Repository::unsubscribe_many( $ids, $owner->email );
 		}
 
-		$url = add_query_arg(
-			[
-				'action'               => self::ACTION,
-				'token'                => $token,
-				'apermo_notify_result' => 'managed',
-			],
-			home_url( '/' ),
-		);
-
-		wp_safe_redirect( $url );
+		wp_safe_redirect( $this->target_url( $token, 'managed' ) );
 		exit();
 	}
 
@@ -119,7 +125,7 @@ final class ManagePage {
 	 * @return array<int, int>
 	 */
 	private function selected_ids(): array {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verified by handle_post() before this call; each value is cast to int below.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce checked in handle_post(); each value is intval'd below.
 		$raw = isset( $_POST['ids'] ) && \is_array( $_POST['ids'] ) ? $_POST['ids'] : [];
 		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
@@ -137,29 +143,50 @@ final class ManagePage {
 	}
 
 	/**
-	 * Renders the manage page HTML wrapped in `get_header()` / `get_footer()`.
+	 * Builds the redirect URL back to the manage page after a POST handler.
+	 *
+	 * @param string $token  Token of the requesting subscriber.
+	 * @param string $result Result code to flash.
+	 *
+	 * @return string
+	 */
+	private function target_url( string $token, string $result ): string {
+		$page_id   = Settings::manage_page_id();
+		$permalink = $page_id > 0 ? (string) get_permalink( $page_id ) : '';
+		if ( $permalink === '' ) {
+			$permalink = home_url( '/' );
+		}
+
+		return add_query_arg(
+			[
+				'token'                => $token,
+				'apermo_notify_result' => $result,
+			],
+			$permalink,
+		);
+	}
+
+	/**
+	 * Builds the manage HTML block injected into the page content.
 	 *
 	 * @param string                   $token Token from the request.
 	 * @param string                   $email Owner email used in the heading.
 	 * @param array<int, Subscription> $rows  Confirmed subscriptions to list.
 	 * @param string                   $flash Optional result code (e.g. `managed`).
 	 *
-	 * @return void
+	 * @return string
 	 */
-	private function render_page( string $token, string $email, array $rows, string $flash ): void {
-		status_header( 200 );
-		nocache_headers();
-		get_header();
+	private function render_manage_block( string $token, string $email, array $rows, string $flash ): string {
+		\ob_start();
 
-		echo '<main class="apermo-notify-manage">';
-		echo '<h1>' . esc_html__( 'Manage your subscriptions', 'apermo-notify' ) . '</h1>';
-		echo '<p class="apermo-notify-form__intro">'
-			. \sprintf(
-				/* translators: %s: email address */
-				esc_html__( 'Showing every confirmed subscription for %s.', 'apermo-notify' ),
-				'<code>' . esc_html( $email ) . '</code>',
-			)
-			. '</p>';
+		echo '<section class="apermo-notify-manage">';
+		echo '<p class="apermo-notify-form__intro">';
+		\printf(
+			/* translators: %s: email address */
+			esc_html__( 'Showing every confirmed subscription for %s.', 'apermo-notify' ),
+			'<code>' . esc_html( $email ) . '</code>',
+		);
+		echo '</p>';
 
 		if ( $flash === 'managed' ) {
 			echo '<p class="apermo-notify-message apermo-notify-message--managed" role="status">'
@@ -175,8 +202,24 @@ final class ManagePage {
 			$this->render_form( $token, $rows );
 		}
 
-		echo '</main>';
-		get_footer();
+		echo '</section>';
+
+		return (string) \ob_get_clean();
+	}
+
+	/**
+	 * Returns the HTML appended when the token is invalid / expired.
+	 *
+	 * @return string
+	 */
+	private function render_invalid_token_block(): string {
+		return '<section class="apermo-notify-manage apermo-notify-manage--error">'
+			. '<p class="apermo-notify-message apermo-notify-message--error" role="status">'
+			. esc_html__(
+				'This manage link is no longer valid. Please use the latest email you received from us.',
+				'apermo-notify',
+			)
+			. '</p></section>';
 	}
 
 	/**
@@ -233,21 +276,5 @@ final class ManagePage {
 		echo esc_html( $title );
 		echo '</label>';
 		echo '</li>';
-	}
-
-	/**
-	 * Renders the page shown when the manage link contains a bad/expired token.
-	 *
-	 * @return void
-	 */
-	private function render_error_page(): void {
-		status_header( 404 );
-		nocache_headers();
-		get_header();
-		echo '<main class="apermo-notify-manage apermo-notify-manage--error">';
-		echo '<h1>' . esc_html__( 'Link expired', 'apermo-notify' ) . '</h1>';
-		echo '<p>' . esc_html__( 'This manage link is no longer valid. Please use the latest email you received from us.', 'apermo-notify' ) . '</p>';
-		echo '</main>';
-		get_footer();
 	}
 }
