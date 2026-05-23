@@ -14,6 +14,7 @@ use Apermo\Notify\Admin\SubscribersPage;
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\AutoAppend;
 use Apermo\Notify\Frontend\FormHandler;
+use Apermo\Notify\Frontend\ManagePage;
 use Apermo\Notify\Frontend\Styles;
 use Apermo\Notify\Privacy\Eraser;
 use Apermo\Notify\Privacy\Exporter;
@@ -88,6 +89,7 @@ class Main {
 
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
+		( new ManagePage() )->register();
 		( new AutoAppend() )->register();
 		( new Styles() )->register();
 		( new PostHooks() )->register();
