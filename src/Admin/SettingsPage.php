@@ -236,33 +236,6 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Renders an admin warning when the site has no Privacy Policy page set.
-	 *
-	 * @return void
-	 */
-	private static function render_privacy_policy_notice(): void {
-		$policy_page_id = (int) get_option( 'wp_page_for_privacy_policy' );
-		if ( $policy_page_id > 0 ) {
-			return;
-		}
-
-		$link = '<a href="' . esc_url( admin_url( 'options-privacy.php' ) ) . '">'
-			. esc_html__( 'Privacy settings', 'apermo-notify' )
-			. '</a>';
-
-		echo '<div class="notice notice-warning"><p>'
-			. wp_kses(
-				\sprintf(
-					/* translators: %s: link to the Privacy settings screen */
-					__( 'No privacy policy page is configured. The subscribe form needs one to be GDPR-compliant — pick or create a page in %s.', 'apermo-notify' ),
-					$link,
-				),
-				[ 'a' => [ 'href' => true ] ],
-			)
-			. '</p></div>';
-	}
-
-	/**
 	 * Wires the menu entry and POST handler.
 	 *
 	 * @return void
@@ -301,8 +274,6 @@ final class SettingsPage {
 		$settings = Settings::all();
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Apermo Notify settings', 'apermo-notify' ) . '</h1>';
-
-		self::render_privacy_policy_notice();
 
 		if ( self::saved_flash() ) {
 			echo '<div class="notice notice-success is-dismissible"><p>'
