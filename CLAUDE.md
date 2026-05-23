@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GitHub template repository for bootstrapping WordPress plugins and themes. Ships both plugin and theme scaffolding; a `setup.sh` script lets developers choose their mode and configures the project accordingly.
 
-**PHP 8.1+, WordPress 6.4+.** Strict types everywhere (`declare(strict_types=1)`).
+**PHP 8.1+, WordPress 7.0+.** Strict types everywhere (`declare(strict_types=1)`).
 
 ## Architecture
 
