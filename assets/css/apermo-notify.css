@@ -19,6 +19,27 @@
 }
 
 /*
+ * Themes often scope their input styles to `#commentform input[...]` so
+ * the cascade doesn't reach this form's input. Provide usable defaults
+ * at specificity 0 — themes that style `input[type="email"]` globally still
+ * win automatically.
+ */
+:where(.apermo-notify-form__input) {
+	width: 100%;
+	padding: 0.6em 0.75em;
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+	border-radius: 0.25em;
+}
+
+:where(.apermo-notify-form__input:focus) {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+/*
  * Flash messages — the comment-form cascade doesn't cover these because
  * comments use their own moderation/error flow.
  */
