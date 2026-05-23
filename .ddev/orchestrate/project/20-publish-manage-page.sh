@@ -47,9 +47,16 @@ publish_for_site() {
     existing_id="${existing_id//[^0-9]/}"
     : "${existing_id:=0}"
 
+    # Pick an author. Prefer the first administrator so the page shows
+    # a proper byline in the Pages list; fall back to user 1.
+    local author_id
+    author_id="$(wp user list --role=administrator --field=ID --number=1 "${site_args[@]}" --path="${WP_PATH}" 2>/dev/null | head -n 1)"
+    author_id="${author_id//[^0-9]/}"
+    : "${author_id:=1}"
+
     local page_id="$existing_id"
     if [ "$page_id" -gt 0 ]; then
-        wp post update "$page_id" --post_status=publish "${site_args[@]}" --path="${WP_PATH}" >/dev/null
+        wp post update "$page_id" --post_status=publish --post_author="$author_id" "${site_args[@]}" --path="${WP_PATH}" >/dev/null
         echo "Re-used existing manage-subscriptions page (ID ${page_id})."
     else
         page_id="$(wp post create \
@@ -57,6 +64,7 @@ publish_for_site() {
             --post_title='Manage your subscriptions' \
             --post_name='manage-subscriptions' \
             --post_status=publish \
+            --post_author="$author_id" \
             --post_content='<!-- wp:paragraph --><p>Visit this page via the link in any of your notification emails to manage your subscriptions.</p><!-- /wp:paragraph -->' \
             --porcelain \
             "${site_args[@]}" --path="${WP_PATH}")"

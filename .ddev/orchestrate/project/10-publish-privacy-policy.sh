@@ -50,12 +50,18 @@ publish_for_site() {
         return 0
     fi
 
+    local author_id
+    author_id="$(wp user list --role=administrator --field=ID --number=1 "${site_args[@]}" --path="${WP_PATH}" 2>/dev/null | head -n 1)"
+    author_id="${author_id//[^0-9]/}"
+    : "${author_id:=1}"
+
     local new_id
     new_id="$(wp post create \
         --post_type=page \
         --post_title='Privacy Policy' \
         --post_name='privacy-policy' \
         --post_status=publish \
+        --post_author="$author_id" \
         --post_content='<!-- wp:paragraph --><p>Placeholder privacy policy for local development. Replace before going to production.</p><!-- /wp:paragraph -->' \
         --porcelain \
         "${site_args[@]}" --path="${WP_PATH}")"
