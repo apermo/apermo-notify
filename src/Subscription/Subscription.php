@@ -31,17 +31,20 @@ final class Subscription {
 	/**
 	 * Constructs a Subscription value object.
 	 *
-	 * @param int|null    $id               Primary key, null for unsaved rows.
-	 * @param string      $target_type      Target type slug (`post`, `author`, …).
-	 * @param int         $target_id        Target identifier (post ID, user ID, term ID, or 0).
-	 * @param string      $target_meta      Secondary target qualifier (post_type slug, …).
-	 * @param string|null $filter_json      Optional filter payload, JSON-encoded.
-	 * @param string      $email            Subscriber email, normalized lowercase.
-	 * @param string      $token            Confirmation/unsubscribe token, 64 hex chars.
-	 * @param int         $status           One of the STATUS_* constants.
-	 * @param string      $created_at       Creation timestamp in MySQL DATETIME format.
-	 * @param string|null $confirmed_at     Confirmation timestamp or null.
-	 * @param string|null $last_notified_at Last successful notification timestamp or null.
+	 * @param int|null    $id                  Primary key, null for unsaved rows.
+	 * @param string      $target_type         Target type slug (`post`, `author`, …).
+	 * @param int         $target_id           Target identifier (post ID, user ID, term ID, or 0).
+	 * @param string      $target_meta         Secondary target qualifier (post_type slug, …).
+	 * @param string|null $filter_json         Optional filter payload, JSON-encoded.
+	 * @param string      $email               Subscriber email, normalized lowercase.
+	 * @param string      $token               Confirmation/unsubscribe token, 64 hex chars.
+	 * @param int         $status              One of the STATUS_* constants.
+	 * @param string      $created_at          Creation timestamp in MySQL DATETIME format.
+	 * @param string|null $confirmed_at        Confirmation timestamp or null.
+	 * @param string|null $last_notified_at    Last successful notification timestamp or null.
+	 * @param string|null $consent_at          Timestamp the subscriber ticked the consent checkbox, or null for legacy rows.
+	 * @param string|null $kept_alive_at       Last "I still want this" timestamp; drives the stale-pruning cron.
+	 * @param string|null $stale_email_sent_at Timestamp the stale warning email was sent, or null when no warning is pending.
 	 */
 	public function __construct(
 		public readonly ?int $id,
@@ -55,6 +58,9 @@ final class Subscription {
 		public readonly string $created_at,
 		public readonly ?string $confirmed_at,
 		public readonly ?string $last_notified_at,
+		public readonly ?string $consent_at = null,
+		public readonly ?string $kept_alive_at = null,
+		public readonly ?string $stale_email_sent_at = null,
 	) {
 	}
 
@@ -80,6 +86,9 @@ final class Subscription {
 			created_at: (string) ( $row['created_at'] ?? '' ),
 			confirmed_at: isset( $row['confirmed_at'] ) ? (string) $row['confirmed_at'] : null,
 			last_notified_at: isset( $row['last_notified_at'] ) ? (string) $row['last_notified_at'] : null,
+			consent_at: isset( $row['consent_at'] ) ? (string) $row['consent_at'] : null,
+			kept_alive_at: isset( $row['kept_alive_at'] ) ? (string) $row['kept_alive_at'] : null,
+			stale_email_sent_at: isset( $row['stale_email_sent_at'] ) ? (string) $row['stale_email_sent_at'] : null,
 		);
 	}
 }

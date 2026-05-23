@@ -21,7 +21,7 @@ class Activation {
 	/**
 	 * Current schema version. Increment when the SQL below changes.
 	 */
-	public const SCHEMA_VERSION = 1;
+	public const SCHEMA_VERSION = 2;
 
 	/**
 	 * Unprefixed name of the subscriptions table.
@@ -34,12 +34,48 @@ class Activation {
 	public const SENT_LOG_TABLE = 'apermo_notify_sent_log';
 
 	/**
-	 * Runs activation: creates or migrates custom tables.
+	 * Runs activation: creates or migrates custom tables and backfills any
+	 * schema upgrade that needs data movement (dbDelta only adds columns).
 	 *
 	 * @return void
 	 */
 	public static function activate(): void {
+		$previous_version = (int) get_option( self::VERSION_OPTION, 0 );
+
 		self::tables()->create_and_update_tables();
+
+		if ( $previous_version > 0 && $previous_version < 2 ) {
+			self::backfill_v2();
+		}
+	}
+
+	/**
+	 * Backfills the v2 columns for rows created under v1 so the prune cron
+	 * doesn't immediately mark legacy data stale.
+	 *
+	 * @return void
+	 */
+	private static function backfill_v2(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . self::SUBSCRIPTIONS_TABLE;
+
+		// Existing confirmed rows: their last "interaction" was confirmation.
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'UPDATE %i SET kept_alive_at = confirmed_at WHERE confirmed_at IS NOT NULL AND kept_alive_at IS NULL',
+				$table,
+			),
+		);
+
+		// Any row without recorded consent: assume implicit consent at creation
+		// time. New rows from v2 onwards record explicit consent in FormHandler.
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'UPDATE %i SET consent_at = created_at WHERE consent_at IS NULL',
+				$table,
+			),
+		);
 	}
 
 	/**
@@ -80,10 +116,14 @@ class Activation {
 				created_at datetime NOT NULL,
 				confirmed_at datetime NULL,
 				last_notified_at datetime NULL,
+				consent_at datetime NULL,
+				kept_alive_at datetime NULL,
+				stale_email_sent_at datetime NULL,
 				PRIMARY KEY  (id),
 				KEY target (target_type, target_id),
 				KEY email (email),
 				KEY token (token),
+				KEY kept_alive (kept_alive_at),
 				UNIQUE KEY target_email (target_type, target_id, target_meta, email)
 			) %s",
 		);
