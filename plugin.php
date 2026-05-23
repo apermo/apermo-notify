@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: Apermo_Notify
+ * Plugin Name: Apermo Notify
  * Description: A WordPress plugin.
  * Version:     0.1.0
  * Author:      Christoph Daum
