@@ -11,6 +11,8 @@ use Apermo\Notify\Admin\DeactivationFlow;
 use Apermo\Notify\Admin\PostMetaBox;
 use Apermo\Notify\Admin\SettingsPage;
 use Apermo\Notify\Admin\SubscribersPage;
+use Apermo\Notify\Cron\Pruner;
+use Apermo\Notify\Cron\Scheduler;
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\AutoAppend;
 use Apermo\Notify\Frontend\FormHandler;
@@ -65,6 +67,7 @@ class Main {
 	 */
 	public static function activate(): void {
 		Activation::activate();
+		Scheduler::schedule();
 	}
 
 	/**
@@ -73,7 +76,7 @@ class Main {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Deactivation logic.
+		Scheduler::unschedule();
 	}
 
 	/**
@@ -90,6 +93,8 @@ class Main {
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
 		( new ManagePage() )->register();
+		( new Scheduler() )->register();
+		( new Pruner() )->register();
 		( new AutoAppend() )->register();
 		( new Styles() )->register();
 		( new PostHooks() )->register();

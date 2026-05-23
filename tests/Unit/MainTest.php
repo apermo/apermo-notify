@@ -89,6 +89,8 @@ class MainTest extends TestCase {
 	 * @return void
 	 */
 	public function test_deactivate(): void {
+		Functions\stubs( [ 'wp_clear_scheduled_hook' ] );
+
 		Main::deactivate();
 		$this->assertTrue( true );
 	}
