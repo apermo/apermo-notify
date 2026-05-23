@@ -23,12 +23,19 @@ if ( $wp_tests_dir !== false && is_dir( $wp_tests_dir ) ) {
 	tests_add_filter( 'muplugins_loaded', 'apermo_notify_tests_load_project' );
 
 	require_once $wp_tests_dir . '/includes/bootstrap.php';
-} elseif ( ! defined( 'ABSPATH' ) ) {
+} else {
 	// Unit-test path: WP is not loaded, but src/ files guard themselves with
 	// `defined( 'ABSPATH' ) || exit;`. Define a harmless constant so the guard
 	// passes during autoload. The integration path leaves this to wp-phpunit's
 	// bootstrap, which sets ABSPATH to the real WordPress install root.
-	define( 'ABSPATH', __DIR__ . '/../' );
+	if ( ! defined( 'ABSPATH' ) ) {
+		define( 'ABSPATH', __DIR__ . '/../' );
+	}
+
+	// Minimal WP_Post stub so unit tests can construct post-shaped fixtures
+	// without pulling in WordPress. Integration tests get the real class via
+	// wp-phpunit.
+	require_once __DIR__ . '/Unit/Support/wp-post-stub.php';
 }
 
 /**
