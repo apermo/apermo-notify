@@ -8,6 +8,7 @@ namespace Apermo\Notify;
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Admin\ManagePageNotice;
 use Apermo\Notify\Admin\PostDeletionListener;
 use Apermo\Notify\Admin\PostMetaBox;
 use Apermo\Notify\Admin\PrivacyPolicyNotice;
@@ -117,6 +118,7 @@ class Main {
 			( new SubscribersPage() )->register();
 			( new SettingsPage() )->register();
 			( new PrivacyPolicyNotice() )->register();
+			( new ManagePageNotice() )->register();
 		}
 	}
 }
