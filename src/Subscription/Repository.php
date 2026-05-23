@@ -42,6 +42,7 @@ final class Repository {
 	 * @param int    $target_id   Target identifier (or 0).
 	 * @param string $target_meta Secondary target qualifier or empty string.
 	 * @param string $email       Subscriber email (will be normalized).
+	 * @param bool   $has_consent Whether the visitor ticked the consent checkbox.
 	 *
 	 * @return int Subscription ID (new or reactivated), 0 when the email is already confirmed for this target.
 	 */
@@ -50,12 +51,14 @@ final class Repository {
 		int $target_id,
 		string $target_meta,
 		string $email,
+		bool $has_consent = false,
 	): int {
-		$email     = Token::normalize_email( $email );
-		$token     = Token::generate();
-		$timestamp = current_time( 'mysql', true );
+		$email      = Token::normalize_email( $email );
+		$token      = Token::generate();
+		$timestamp  = current_time( 'mysql', true );
+		$consent_at = $has_consent ? $timestamp : null;
 
-		$new_id = self::insert_pending( $target_type, $target_id, $target_meta, $email, $token, $timestamp );
+		$new_id = self::insert_pending( $target_type, $target_id, $target_meta, $email, $token, $timestamp, $consent_at );
 		if ( $new_id > 0 ) {
 			return $new_id;
 		}
@@ -65,18 +68,21 @@ final class Repository {
 			return $existing === null ? 0 : 0;
 		}
 
-		return self::reset_to_pending( (int) $existing->id, $token, $timestamp );
+		return self::reset_to_pending( (int) $existing->id, $token, $timestamp, $consent_at );
 	}
+
+	// phpcs:disable Apermo.CodeQuality.ExcessiveParameterCount.TooMany -- Inserts mirror DB columns; bundling into an array buys nothing.
 
 	/**
 	 * Inserts a brand new pending row.
 	 *
-	 * @param string $target_type Target type slug.
-	 * @param int    $target_id   Target identifier.
-	 * @param string $target_meta Secondary qualifier.
-	 * @param string $email       Normalized email.
-	 * @param string $token       Generated token.
-	 * @param string $timestamp   MySQL DATETIME (UTC).
+	 * @param string      $target_type Target type slug.
+	 * @param int         $target_id   Target identifier.
+	 * @param string      $target_meta Secondary qualifier.
+	 * @param string      $email       Normalized email.
+	 * @param string      $token       Generated token.
+	 * @param string      $timestamp   MySQL DATETIME (UTC).
+	 * @param string|null $consent_at  Timestamp the consent box was ticked, or null when missing.
 	 *
 	 * @return int New ID, or 0 if the insert failed (typically a unique-key collision).
 	 */
@@ -87,6 +93,7 @@ final class Repository {
 		string $email,
 		string $token,
 		string $timestamp,
+		?string $consent_at,
 	): int {
 		global $wpdb;
 
@@ -100,12 +107,15 @@ final class Repository {
 				'token'       => $token,
 				'status'      => Subscription::STATUS_PENDING,
 				'created_at'  => $timestamp,
+				'consent_at'  => $consent_at,
 			],
-			[ '%s', '%d', '%s', '%s', '%s', '%d', '%s' ],
+			[ '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s' ],
 		);
 
 		return ( \is_int( $inserted ) && $inserted > 0 ) ? (int) $wpdb->insert_id : 0;
 	}
+
+	// phpcs:enable Apermo.CodeQuality.ExcessiveParameterCount.TooMany
 
 	/**
 	 * Finds a single subscription matching the target/email tuple, regardless of status.
@@ -117,7 +127,7 @@ final class Repository {
 	 *
 	 * @return Subscription|null
 	 */
-	private static function find_by_target_email(
+	public static function find_by_target_email(
 		string $target_type,
 		int $target_id,
 		string $target_meta,
@@ -143,26 +153,30 @@ final class Repository {
 	/**
 	 * Resets an existing row back to PENDING with a fresh token and timestamp.
 	 *
-	 * @param int    $id        Existing subscription ID.
-	 * @param string $token     New token to write.
-	 * @param string $timestamp New `created_at` value.
+	 * @param int         $id         Existing subscription ID.
+	 * @param string      $token      New token to write.
+	 * @param string      $timestamp  New `created_at` value.
+	 * @param string|null $consent_at Timestamp consent was ticked on the resubmit, or null when missing.
 	 *
 	 * @return int The same ID.
 	 */
-	private static function reset_to_pending( int $id, string $token, string $timestamp ): int {
+	private static function reset_to_pending( int $id, string $token, string $timestamp, ?string $consent_at ): int {
 		global $wpdb;
 
 		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
 			[
-				'status'           => Subscription::STATUS_PENDING,
-				'token'            => $token,
-				'created_at'       => $timestamp,
-				'confirmed_at'     => null,
-				'last_notified_at' => null,
+				'status'              => Subscription::STATUS_PENDING,
+				'token'               => $token,
+				'created_at'          => $timestamp,
+				'confirmed_at'        => null,
+				'last_notified_at'    => null,
+				'consent_at'          => $consent_at,
+				'kept_alive_at'       => null,
+				'stale_email_sent_at' => null,
 			],
 			[ 'id' => $id ],
-			[ '%d', '%s', '%s', '%s', '%s' ],
+			[ '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ],
 			[ '%d' ],
 		);
 
@@ -184,14 +198,17 @@ final class Repository {
 			return null;
 		}
 
+		$now_utc = current_time( 'mysql', true );
+
 		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
 			[
-				'status'       => Subscription::STATUS_CONFIRMED,
-				'confirmed_at' => current_time( 'mysql', true ),
+				'status'        => Subscription::STATUS_CONFIRMED,
+				'confirmed_at'  => $now_utc,
+				'kept_alive_at' => $now_utc,
 			],
 			[ 'id' => $subscription->id ],
-			[ '%d', '%s' ],
+			[ '%d', '%s', '%s' ],
 			[ '%d' ],
 		);
 
@@ -333,5 +350,219 @@ final class Repository {
 		);
 
 		return \is_int( $deleted ) ? $deleted : 0;
+	}
+
+	/**
+	 * Returns every confirmed subscription for a given email address.
+	 *
+	 * @param string $email Subscriber email (will be normalized).
+	 *
+	 * @return array<int, Subscription>
+	 */
+	public static function find_confirmed_by_email( string $email ): array {
+		global $wpdb;
+
+		$email = Token::normalize_email( $email );
+		if ( $email === '' ) {
+			return [];
+		}
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE email = %s AND status = %d ORDER BY confirmed_at DESC',
+				self::table(),
+				$email,
+				Subscription::STATUS_CONFIRMED,
+			),
+			\ARRAY_A,
+		);
+
+		if ( ! \is_array( $rows ) ) {
+			return [];
+		}
+
+		return \array_map( [ Subscription::class, 'from_row' ], $rows );
+	}
+
+	/**
+	 * Returns confirmed rows whose kept_alive timestamp is older than the
+	 * cutoff and that haven't yet received a stale-warning email.
+	 *
+	 * @param string $cutoff_datetime MySQL DATETIME (UTC). Rows with `kept_alive_at < cutoff` qualify.
+	 *
+	 * @return array<int, Subscription>
+	 */
+	public static function find_stale_for_warning( string $cutoff_datetime ): array {
+		global $wpdb;
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE status = %d AND kept_alive_at IS NOT NULL AND kept_alive_at < %s AND stale_email_sent_at IS NULL',
+				self::table(),
+				Subscription::STATUS_CONFIRMED,
+				$cutoff_datetime,
+			),
+			\ARRAY_A,
+		);
+
+		if ( ! \is_array( $rows ) ) {
+			return [];
+		}
+
+		return \array_map( [ Subscription::class, 'from_row' ], $rows );
+	}
+
+	/**
+	 * Returns IDs of rows that should now be deleted.
+	 *
+	 * In `delete` mode the caller passes `$grace_datetime = null` and we
+	 * delete by `kept_alive_at < $stale_datetime`. In `keep_alive` mode the
+	 * caller passes both; we delete rows whose stale warning was sent at
+	 * least the grace window ago and that haven't been kept-alive since.
+	 *
+	 * @param string      $stale_datetime  Cutoff for kept_alive_at when in delete mode.
+	 * @param string|null $grace_datetime  Cutoff for stale_email_sent_at in keep-alive mode; null for delete mode.
+	 *
+	 * @return array<int, int>
+	 */
+	public static function find_stale_for_purge( string $stale_datetime, ?string $grace_datetime ): array {
+		global $wpdb;
+
+		if ( $grace_datetime === null ) {
+			$ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					'SELECT id FROM %i WHERE status = %d AND kept_alive_at IS NOT NULL AND kept_alive_at < %s',
+					self::table(),
+					Subscription::STATUS_CONFIRMED,
+					$stale_datetime,
+				),
+			);
+		} else {
+			$ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					'SELECT id FROM %i WHERE status = %d AND stale_email_sent_at IS NOT NULL AND stale_email_sent_at < %s',
+					self::table(),
+					Subscription::STATUS_CONFIRMED,
+					$grace_datetime,
+				),
+			);
+		}
+
+		return \is_array( $ids ) ? \array_map( 'intval', $ids ) : [];
+	}
+
+	/**
+	 * Records that the stale-warning email has been sent for a row.
+	 *
+	 * @param int $id Subscription ID.
+	 *
+	 * @return void
+	 */
+	public static function mark_stale_warning_sent( int $id ): void {
+		global $wpdb;
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			[ 'stale_email_sent_at' => current_time( 'mysql', true ) ],
+			[ 'id' => $id ],
+			[ '%s' ],
+			[ '%d' ],
+		);
+	}
+
+	/**
+	 * Extends the keep-alive window on the row matching a token.
+	 *
+	 * @param string $token Token from the keep-alive URL.
+	 *
+	 * @return Subscription|null Updated subscription, or null when the token is invalid.
+	 */
+	public static function extend_keep_alive( string $token ): ?Subscription {
+		global $wpdb;
+
+		$subscription = self::find_by_token( $token );
+		if ( $subscription === null || $subscription->status !== Subscription::STATUS_CONFIRMED ) {
+			return null;
+		}
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			[
+				'kept_alive_at'       => current_time( 'mysql', true ),
+				'stale_email_sent_at' => null,
+			],
+			[ 'id' => $subscription->id ],
+			[ '%s', '%s' ],
+			[ '%d' ],
+		);
+
+		return self::find_by_token( $token );
+	}
+
+	/**
+	 * Deletes a list of rows by primary key.
+	 *
+	 * @param array<int, int> $ids Subscription IDs to remove.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public static function delete_many( array $ids ): int {
+		if ( $ids === [] ) {
+			return 0;
+		}
+
+		global $wpdb;
+
+		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; nothing else is interpolated.
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE id IN (' . $ids_csv . ')',
+				self::table(),
+			),
+		);
+		// phpcs:enable
+
+		return \is_int( $deleted ) ? $deleted : 0;
+	}
+
+	/**
+	 * Unsubscribes selected rows but only when each row belongs to the given
+	 * email. Lets a token holder manage only their own subscriptions even if
+	 * they supply IDs from someone else's set.
+	 *
+	 * @param array<int, int> $ids   Candidate subscription IDs.
+	 * @param string          $email Owner email (will be normalized).
+	 *
+	 * @return int Rows updated.
+	 */
+	public static function unsubscribe_many( array $ids, string $email ): int {
+		if ( $ids === [] ) {
+			return 0;
+		}
+
+		$email = Token::normalize_email( $email );
+		if ( $email === '' ) {
+			return 0;
+		}
+
+		global $wpdb;
+
+		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; email + statuses use placeholders.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %d WHERE email = %s AND status = %d AND id IN (' . $ids_csv . ')',
+				self::table(),
+				Subscription::STATUS_UNSUBSCRIBED,
+				$email,
+				Subscription::STATUS_CONFIRMED,
+			),
+		);
+		// phpcs:enable
+
+		return \is_int( $updated ) ? $updated : 0;
 	}
 }
