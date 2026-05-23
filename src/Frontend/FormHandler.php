@@ -216,7 +216,7 @@ final class FormHandler {
 	 * Redirects back to the originating post with a result code on the query.
 	 *
 	 * @param int    $post_id Post the form was submitted from (0 for unknown).
-	 * @param string $result  Result code (`pending`, `throttled`, `duplicate`, `invalid_email`, `invalid`).
+	 * @param string $result  Result code (`pending`, `throttled`, `consent_required`, `invalid_email`, `invalid`, `mail_failure`).
 	 *
 	 * @return void
 	 */

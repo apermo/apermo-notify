@@ -202,8 +202,6 @@ final class FormRenderer {
 				return __( 'Subscription confirmed. You will receive an email when this post is updated.', 'apermo-notify' );
 			case 'unsubscribed':
 				return __( 'You have been unsubscribed from this post.', 'apermo-notify' );
-			case 'duplicate':
-				return __( 'You are already subscribed to this content.', 'apermo-notify' );
 			case 'throttled':
 				return __( 'Please wait a moment before trying again.', 'apermo-notify' );
 			case 'invalid_email':
