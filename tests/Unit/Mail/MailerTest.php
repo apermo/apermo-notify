@@ -53,4 +53,25 @@ final class MailerTest extends TestCase {
 		$this->assertStringContainsString( 'action=' . Mailer::ACTION_CONFIRM, $url );
 		$this->assertStringContainsString( 'token=' . \str_repeat( 'a', 64 ), $url );
 	}
+
+	/**
+	 * Confirms manage_url is a front-of-site URL with the manage action and token.
+	 *
+	 * @return void
+	 */
+	public function test_manage_url_builds_home_url(): void {
+		Functions\stubs(
+			[
+				'home_url'      => static fn ( string $path ): string => 'https://example.tld' . $path,
+				'add_query_arg' => static fn ( array $args, string $url ): string => $url . '?' . \http_build_query( $args ),
+			],
+		);
+
+		$url = Mailer::manage_url( \str_repeat( 'b', 64 ) );
+
+		$this->assertStringStartsWith( 'https://example.tld/', $url );
+		$this->assertStringNotContainsString( 'admin-post.php', $url );
+		$this->assertStringContainsString( 'action=' . Mailer::ACTION_MANAGE, $url );
+		$this->assertStringContainsString( 'token=' . \str_repeat( 'b', 64 ), $url );
+	}
 }

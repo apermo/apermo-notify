@@ -36,6 +36,17 @@ if ( $wp_tests_dir !== false && is_dir( $wp_tests_dir ) ) {
 	// without pulling in WordPress. Integration tests get the real class via
 	// wp-phpunit.
 	require_once __DIR__ . '/Unit/Support/wp-post-stub.php';
+
+	// Time constants used by src/ code; integration runs pull these from WP core.
+	if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+		define( 'MINUTE_IN_SECONDS', 60 );
+	}
+	if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+		define( 'HOUR_IN_SECONDS', 60 * 60 );
+	}
+	if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+		define( 'DAY_IN_SECONDS', 24 * 60 * 60 );
+	}
 }
 
 /**
