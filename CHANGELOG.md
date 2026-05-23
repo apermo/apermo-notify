@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `[apermo_notify]` shortcode. The subscribe form is now placed
   via `the_content` (default-on for the post types configured in Settings)
   with a per-post show/hide override in the editor sidebar.
+- Confirmed-subscribe duplicates no longer surface a distinct `duplicate`
+  flash on the form: the response is now identical to a fresh subscribe so
+  the form cannot be used to enumerate which addresses are on the list.
+  The legitimate owner of the address receives an "already subscribed"
+  email instead, throttled by the existing per-IP rate limit.
+- Notification and confirmation emails now include a "Manage all my
+  subscriptions" link alongside the per-post unsubscribe URL.
 
 ### Added
 
@@ -21,6 +28,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toggle the "auto-append form on enabled posts" default.
 - Per-post visibility tri-state in the editor sidebar (Default / Show / Hide)
   stored in `_apermo_notify_show_form` post meta.
+- Mandatory consent checkbox below the email field. Links to the site's
+  Privacy Policy page when one is configured; an admin notice on the
+  Settings screen prompts to set the policy when it is missing.
+- Per-email "Manage your subscriptions" page reachable from every email
+  via a token-bearing URL. Lists every confirmed subscription for the
+  address and supports bulk unsubscribe scoped to that email.
+- Configurable retention: `stale_after_months` (6 / 12 / 18 / 24) and
+  `prune_mode` (hard `delete` or warn-then-`keep_alive`). In keep-alive
+  mode, the stale subscriber receives a single warning with a one-click
+  keep-alive link; if ignored, the row is removed after the configurable
+  `stale_grace_days` window (7 / 14 / 30 / 60 / 90).
+- Daily WP-Cron event (`apermo_notify_prune`) that runs the prune workflow,
+  registered on activation and self-healing on every `init`.
+- Database schema v2 with `consent_at`, `kept_alive_at`, and
+  `stale_email_sent_at` columns. Existing v1 rows are backfilled
+  (`kept_alive_at = confirmed_at`, `consent_at = created_at`) on upgrade
+  so the prune cron doesn't immediately mark legacy data stale.
 
 ## [0.1.0] - 2026-05-17
 
