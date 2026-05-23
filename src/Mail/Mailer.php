@@ -201,6 +201,41 @@ final class Mailer {
 	}
 
 	/**
+	 * Sends the manage-link email triggered by the "request a manage link"
+	 * form on the manage page. Body contains only the manage URL.
+	 *
+	 * @param Subscription $subscription Confirmed subscription whose token
+	 *                                   identifies the visitor.
+	 *
+	 * @return bool
+	 */
+	public static function send_manage_link( Subscription $subscription ): bool {
+		$manage_url = self::manage_url( $subscription->token );
+
+		// phpcs:disable Apermo.PHP.ForbiddenObjectCast.Found -- WP_Post::__construct needs an object; the filter signature requires a WP_Post even though there's no source post for this email.
+		$stub = new WP_Post( (object) [] );
+		// phpcs:enable Apermo.PHP.ForbiddenObjectCast.Found
+
+		$subject = self::subject_for(
+			'manage_link',
+			$subscription,
+			$stub,
+			'manage_link',
+			__( 'Manage your subscriptions', 'apermo-notify' ),
+		);
+
+		$body = self::body_for(
+			'manage_link',
+			$subscription,
+			$stub,
+			'manage_link',
+			self::render_manage_link_body( $manage_url ),
+		);
+
+		return self::send( $subscription->email, $subject, $body );
+	}
+
+	/**
 	 * Builds the absolute URL for a one-click token action.
 	 *
 	 * @param string $action Either ACTION_CONFIRM or ACTION_UNSUBSCRIBE.
@@ -412,6 +447,33 @@ final class Mailer {
 			$post->post_title,
 			$manage_url,
 			$unsubscribe_url,
+		);
+	}
+
+	/**
+	 * Renders the body for the deletion-notice email.
+	 *
+	 * @param WP_Post $post        Post being deleted.
+	 * @param string  $manage_url  Manage-all URL for the subscriber.
+	 * @param string  $custom_note Optional author note from the admin dialog.
+	 *
+	 * @return string
+	 */
+	/**
+	 * Renders the body for the manage-link request email.
+	 *
+	 * @param string $manage_url URL to the visitor's manage page.
+	 *
+	 * @return string
+	 */
+	private static function render_manage_link_body( string $manage_url ): string {
+		return \sprintf(
+			/* translators: %s: manage URL */
+			__(
+				"Someone (hopefully you) asked for a link to manage their subscriptions on this site.\n\nOpen this link to review and unsubscribe from any of them:\n\n%s\n\nIf you did not request this, you can ignore the message.",
+				'apermo-notify',
+			),
+			$manage_url,
 		);
 	}
 

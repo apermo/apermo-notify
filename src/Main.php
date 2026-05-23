@@ -20,6 +20,7 @@ use Apermo\Notify\Cron\Scheduler;
 use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Editor\UpdateDialog;
 use Apermo\Notify\Frontend\AutoAppend;
+use Apermo\Notify\Frontend\Blocks\ManageSubscriptionsBlock;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Frontend\ManagePage;
 use Apermo\Notify\Frontend\Styles;
@@ -103,6 +104,7 @@ class Main {
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
 		( new ManagePage() )->register();
+		( new ManageSubscriptionsBlock() )->register();
 		( new Scheduler() )->register();
 		( new Pruner() )->register();
 		( new AutoAppend() )->register();

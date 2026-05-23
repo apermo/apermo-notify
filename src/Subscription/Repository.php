@@ -590,6 +590,20 @@ final class Repository {
 	}
 
 	/**
+	 * Returns the first confirmed subscription for an email, or null when
+	 * none exists. Used by the "request a manage link" flow which needs any
+	 * one of the visitor's tokens to build the manage URL.
+	 *
+	 * @param string $email Subscriber email (will be normalized).
+	 *
+	 * @return Subscription|null
+	 */
+	public static function find_first_confirmed_by_email( string $email ): ?Subscription {
+		$rows = self::find_confirmed_by_email( $email );
+		return $rows === [] ? null : $rows[0];
+	}
+
+	/**
 	 * Returns confirmed-subscriber counts keyed by target ID.
 	 *
 	 * Used by the admin list table to decide whether to surface the
