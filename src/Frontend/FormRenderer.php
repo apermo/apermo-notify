@@ -36,7 +36,7 @@ final class FormRenderer {
 		\ob_start();
 		?>
 		<form
-			class="apermo-notify-form wp-block-group"
+			class="apermo-notify-form"
 			method="post"
 			action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 		>
@@ -64,9 +64,9 @@ final class FormRenderer {
 		if ( $intro === '' ) {
 			return;
 		}
-		echo '<div class="apermo-notify-form__intro wp-block-paragraph">'
+		echo '<p class="apermo-notify-form__intro">'
 			. wp_kses_post( $intro )
-			. '</div>';
+			. '</p>';
 	}
 
 	/**
@@ -91,14 +91,14 @@ final class FormRenderer {
 	 */
 	private static function render_email_field( int $post_id ): void {
 		$input_id = 'apermo-notify-email-' . $post_id;
-		echo '<div class="apermo-notify-form__field">';
-		echo '<label class="apermo-notify-form__label wp-block-form-input-label" for="'
+		echo '<p class="apermo-notify-form__field comment-form-email">';
+		echo '<label class="apermo-notify-form__label" for="'
 			. esc_attr( $input_id ) . '">'
 			. esc_html__( 'Email address', 'apermo-notify' )
 			. '</label>';
-		echo '<input class="apermo-notify-form__input wp-block-form-input-text" type="email" id="'
+		echo '<input class="apermo-notify-form__input" type="email" id="'
 			. esc_attr( $input_id ) . '" name="email" required autocomplete="email" />';
-		echo '</div>';
+		echo '</p>';
 	}
 
 	/**

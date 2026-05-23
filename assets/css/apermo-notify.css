@@ -1,15 +1,16 @@
 /*!
  * Apermo Notify — subscribe form
  *
- * Visually mirrors the WordPress comment form: no card chrome, inputs and
- * labels inherit the theme's typography. Selectors are wrapped in `:where()`
- * to keep specificity at zero so themes can override every property without
- * `!important`. Themes that want full control can drop this stylesheet
- * entirely with `wp_dequeue_style( 'apermo-notify' )`.
+ * Targets the same structure the WordPress comment form uses (label inside a
+ * `<p>` ahead of an input) so themes that style the comment form already
+ * style this one too. Selectors use `:where()` to keep specificity at zero;
+ * themes override every property without `!important`. Drop the stylesheet
+ * entirely with `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
  */
 
 :where(.apermo-notify-form) {
 	margin-block: 1.5em;
+	max-width: 32em;
 }
 
 :where(.apermo-notify-form__intro) {
@@ -17,17 +18,36 @@
 }
 
 :where(.apermo-notify-form__field) {
+	display: block;
 	margin-block-end: 1em;
 }
 
+/* Reset any wp-block-form-input-label cascade so the label matches body text. */
 :where(.apermo-notify-form__label) {
 	display: block;
 	margin-block-end: 0.25em;
+	font-size: inherit;
+	font-weight: inherit;
+	line-height: inherit;
 }
 
+/*
+ * Bare-minimum input styling — themes that style `input[type="email"]`
+ * globally (most modern themes) win automatically thanks to `:where()`.
+ */
 :where(.apermo-notify-form__input) {
 	width: 100%;
-	max-width: 24em;
+	padding: 0.55em 0.75em;
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+	border-radius: 0.25em;
+}
+
+:where(.apermo-notify-form__input:focus) {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
 }
 
 :where(.apermo-notify-form__actions) {
