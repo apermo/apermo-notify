@@ -45,6 +45,11 @@ final class UpdateDialog {
 	public const REST_ROUTE = '/dispatch-update';
 
 	/**
+	 * REST route for the live subscriber-count lookup.
+	 */
+	public const REST_ROUTE_COUNT = '/subscriber-count';
+
+	/**
 	 * Registers the editor enqueue hook and the REST route.
 	 *
 	 * @return void
@@ -88,7 +93,6 @@ final class UpdateDialog {
 			'apermoNotifyEditor',
 			[
 				'postId'       => $post->ID,
-				'count'        => Repository::count_confirmed_for_target( 'post', $post->ID ),
 				// `publish` at script-load time. If the post is already
 				// published, an Update click should surface the dialog.
 				// A fresh draft going through its first publish skips it
@@ -112,6 +116,14 @@ final class UpdateDialog {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		$post_id_arg = [
+			'post_id' => [
+				'type'              => 'integer',
+				'required'          => true,
+				'sanitize_callback' => 'absint',
+			],
+		];
+
 		register_rest_route(
 			self::REST_NAMESPACE,
 			self::REST_ROUTE,
@@ -119,13 +131,18 @@ final class UpdateDialog {
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'handle_dispatch' ],
 				'permission_callback' => [ $this, 'permission_check' ],
-				'args'                => [
-					'post_id' => [
-						'type'              => 'integer',
-						'required'          => true,
-						'sanitize_callback' => 'absint',
-					],
-				],
+				'args'                => $post_id_arg,
+			],
+		);
+
+		register_rest_route(
+			self::REST_NAMESPACE,
+			self::REST_ROUTE_COUNT,
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'handle_count' ],
+				'permission_callback' => [ $this, 'permission_check' ],
+				'args'                => $post_id_arg,
 			],
 		);
 	}
@@ -166,6 +183,27 @@ final class UpdateDialog {
 		return new WP_REST_Response(
 			[
 				'queued' => $count,
+			],
+		);
+	}
+
+	/**
+	 * Returns the live confirmed-subscriber count for a post.
+	 *
+	 * The snackbar needs this number at save-completion time, not at
+	 * editor-load time: subscriptions can be confirmed in another tab
+	 * between opening the editor and clicking Update, and the editor
+	 * would otherwise see a stale zero and silently skip the offer.
+	 *
+	 * @param WP_REST_Request $request Inbound request.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function handle_count( WP_REST_Request $request ): WP_REST_Response {
+		$post_id = (int) $request->get_param( 'post_id' );
+		return new WP_REST_Response(
+			[
+				'count' => Repository::count_confirmed_for_target( 'post', $post_id ),
 			],
 		);
 	}

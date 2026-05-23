@@ -22,7 +22,8 @@
 	}
 
 	var OFFER_NOTICE_ID = 'apermo-notify-update-offer';
-	var REST_PATH = '/apermo-notify/v1/dispatch-update';
+	var REST_PATH_DISPATCH = '/apermo-notify/v1/dispatch-update';
+	var REST_PATH_COUNT = '/apermo-notify/v1/subscriber-count';
 
 	var i18n = config.i18n || {};
 	var notices = wp.data.dispatch( 'core/notices' );
@@ -74,20 +75,32 @@
 				return;
 			}
 
-			if ( ! config.count || config.count <= 0 ) {
-				return;
-			}
-
-			offerNotify();
+			// Live count: editors can confirm subscriptions in another tab
+			// after the editor loaded, so the localized count is unreliable.
+			wp.apiFetch( {
+				path: REST_PATH_COUNT + '?post_id=' + encodeURIComponent( config.postId ),
+				method: 'GET',
+			} )
+				.then( function ( response ) {
+					var count = response && response.count ? parseInt( response.count, 10 ) : 0;
+					if ( count > 0 ) {
+						offerNotify( count );
+					}
+				} )
+				.catch( function () {
+					// Silent — failing to fetch the count just means no offer
+					// surfaces; the user can still trigger a notification by
+					// editing again.
+				} );
 		}
 	} );
 
-	function offerNotify() {
+	function offerNotify( count ) {
 		// Persistent top-of-editor notice (no `type: 'snackbar'`). The same
 		// stable id means a second save replaces the previous offer in
 		// place instead of stacking duplicates.
 		notices.createInfoNotice(
-			( i18n.offer || '' ).replace( '%d', String( config.count ) ),
+			( i18n.offer || '' ).replace( '%d', String( count ) ),
 			{
 				id: OFFER_NOTICE_ID,
 				isDismissible: true,
@@ -96,7 +109,7 @@
 						label: i18n.notify || 'Notify subscribers',
 						onClick: function () {
 							notices.removeNotice( OFFER_NOTICE_ID );
-							dispatchNotify();
+							dispatchNotify( count );
 						},
 					},
 				],
@@ -104,17 +117,17 @@
 		);
 	}
 
-	function dispatchNotify() {
+	function dispatchNotify( fallbackCount ) {
 		// `path:` (not `url:`) so apiFetch's default middlewares prepend the
 		// REST root and add the X-WP-Nonce header — without those the
 		// permission_callback sees an anonymous request and rejects.
 		wp.apiFetch( {
-			path: REST_PATH,
+			path: REST_PATH_DISPATCH,
 			method: 'POST',
 			data: { post_id: config.postId },
 		} )
 			.then( function ( response ) {
-				var queued = response && response.queued ? response.queued : config.count;
+				var queued = response && response.queued ? response.queued : fallbackCount;
 				notices.createSuccessNotice(
 					( i18n.sent || '' ).replace( '%d', String( queued ) ),
 					{ type: 'snackbar' },
