@@ -94,7 +94,6 @@ final class UpdateDialog {
 				// A fresh draft going through its first publish skips it
 				// because the publish-transition fires the auto-notify.
 				'wasPublished' => $post->post_status === 'publish',
-				'restRoot'     => esc_url_raw( rest_url( self::REST_NAMESPACE . self::REST_ROUTE ) ),
 				'i18n'         => [
 					/* translators: %d: confirmed-subscriber count, rendered client-side */
 					'offer'   => __( 'Post updated. Notify %d subscribers about the change?', 'apermo-notify' ),

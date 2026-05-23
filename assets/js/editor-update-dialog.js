@@ -1,11 +1,11 @@
 /**
- * Block-editor snackbar that asks whether to notify confirmed subscribers
+ * Block-editor notice that asks whether to notify confirmed subscribers
  * after every successful update of an already-published post.
  *
  * Replaces the metabox checkbox that required the author to opt in *before*
  * saving. The new flow runs entirely post-save: detect a successful update,
- * surface a snackbar with a "Notify subscribers" action, hit the REST
- * endpoint when the user clicks it.
+ * surface a persistent editor notice with a "Notify subscribers" action,
+ * hit the REST endpoint when the user clicks it.
  *
  * Pure ES5 + global `wp.*` — no build pipeline.
  */
@@ -17,9 +17,12 @@
 	}
 
 	var config = window.apermoNotifyEditor || {};
-	if ( ! config.postId || ! config.restRoot ) {
+	if ( ! config.postId ) {
 		return;
 	}
+
+	var OFFER_NOTICE_ID = 'apermo-notify-update-offer';
+	var REST_PATH = '/apermo-notify/v1/dispatch-update';
 
 	var i18n = config.i18n || {};
 	var notices = wp.data.dispatch( 'core/notices' );
@@ -80,18 +83,19 @@
 	} );
 
 	function offerNotify() {
-		var noticeId = 'apermo-notify-update-offer-' + Date.now();
+		// Persistent top-of-editor notice (no `type: 'snackbar'`). The same
+		// stable id means a second save replaces the previous offer in
+		// place instead of stacking duplicates.
 		notices.createInfoNotice(
 			( i18n.offer || '' ).replace( '%d', String( config.count ) ),
 			{
-				id: noticeId,
-				type: 'snackbar',
+				id: OFFER_NOTICE_ID,
 				isDismissible: true,
 				actions: [
 					{
 						label: i18n.notify || 'Notify subscribers',
 						onClick: function () {
-							notices.removeNotice( noticeId );
+							notices.removeNotice( OFFER_NOTICE_ID );
 							dispatchNotify();
 						},
 					},
@@ -101,8 +105,11 @@
 	}
 
 	function dispatchNotify() {
+		// `path:` (not `url:`) so apiFetch's default middlewares prepend the
+		// REST root and add the X-WP-Nonce header — without those the
+		// permission_callback sees an anonymous request and rejects.
 		wp.apiFetch( {
-			url: config.restRoot,
+			path: REST_PATH,
 			method: 'POST',
 			data: { post_id: config.postId },
 		} )
