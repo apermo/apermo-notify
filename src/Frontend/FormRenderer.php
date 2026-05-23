@@ -45,6 +45,7 @@ final class FormRenderer {
 			self::render_intro( Settings::subscription_text() );
 			self::render_hidden_inputs( $post_id );
 			self::render_email_field( $post_id );
+			self::render_consent_field( $post_id );
 			self::render_submit();
 			self::render_message( $result_code, $message );
 			?>
@@ -100,6 +101,43 @@ final class FormRenderer {
 		echo '<input class="apermo-notify-form__input" type="email" id="'
 			. esc_attr( $input_id ) . '" name="email" required autocomplete="email" />';
 		echo '</p>';
+	}
+
+	/**
+	 * Prints the mandatory consent checkbox (linked to the site's Privacy
+	 * Policy page when one is configured).
+	 *
+	 * @param int $post_id Subscription target (used to scope the input ID).
+	 *
+	 * @return void
+	 */
+	private static function render_consent_field( int $post_id ): void {
+		$input_id     = 'apermo-notify-consent-' . $post_id;
+		$policy_url   = get_privacy_policy_url();
+		$policy_label = esc_html__( 'privacy policy', 'apermo-notify' );
+		$policy_link  = $policy_url !== ''
+			? '<a href="' . esc_url( $policy_url ) . '" target="_blank" rel="noopener">' . $policy_label . '</a>'
+			: $policy_label;
+
+		echo '<p class="apermo-notify-form__field apermo-notify-form__field--consent">';
+		echo '<label class="apermo-notify-form__label" for="' . esc_attr( $input_id ) . '">';
+		echo '<input class="apermo-notify-form__consent" type="checkbox" id="'
+			. esc_attr( $input_id ) . '" name="apermo_notify_consent" value="1" required /> ';
+		echo wp_kses(
+			\sprintf(
+				/* translators: %s: link to the site's privacy policy */
+				__( 'Yes, I have read the %s and agree to receive update notifications by email.', 'apermo-notify' ),
+				$policy_link,
+			),
+			[
+				'a' => [
+					'href'   => true,
+					'target' => true,
+					'rel'    => true,
+				],
+			],
+		);
+		echo '</label></p>';
 	}
 
 	/**
@@ -174,6 +212,12 @@ final class FormRenderer {
 				return __( 'Something went wrong. Please try again.', 'apermo-notify' );
 			case 'mail_failure':
 				return __( 'We could not send the confirmation email. Please try again in a moment.', 'apermo-notify' );
+			case 'consent_required':
+				return __( 'Please confirm you have read the privacy policy.', 'apermo-notify' );
+			case 'kept_alive':
+				return __( 'Thanks — your subscription has been extended.', 'apermo-notify' );
+			case 'managed':
+				return __( 'Your subscriptions have been updated.', 'apermo-notify' );
 			default:
 				return '';
 		}

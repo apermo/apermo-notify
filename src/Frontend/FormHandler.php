@@ -94,6 +94,11 @@ final class FormHandler {
 
 		check_admin_referer( self::NONCE_ACTION );
 
+		if ( ! $this->has_consent() ) {
+			$this->redirect_with_result( $post_id, 'consent_required' );
+			return;
+		}
+
 		$email = $this->require_email();
 		if ( $email === '' ) {
 			$this->redirect_with_result( $post_id, 'invalid_email' );
@@ -106,7 +111,7 @@ final class FormHandler {
 		}
 		$this->mark_throttled();
 
-		$id = Repository::create_pending( 'post', $post_id, '', $email );
+		$id = Repository::create_pending( 'post', $post_id, '', $email, true );
 		if ( $id === 0 ) {
 			// Repository returns 0 only when the email is already CONFIRMED;
 			// pending or unsubscribed rows are reactivated and return >0.
@@ -118,6 +123,18 @@ final class FormHandler {
 		$mailed       = $subscription !== null && Mailer::send_confirm( $subscription, $post );
 
 		$this->redirect_with_result( $post_id, $mailed ? 'pending' : 'mail_failure' );
+	}
+
+	/**
+	 * Reports whether the consent checkbox was ticked on the submission.
+	 *
+	 * @return bool
+	 */
+	private function has_consent(): bool {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce was checked by handle() before this call.
+		return isset( $_POST['apermo_notify_consent'] )
+			&& (string) $_POST['apermo_notify_consent'] === '1';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
