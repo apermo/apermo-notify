@@ -49,10 +49,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   status filter, email search, pagination, and per-row + bulk delete.
 - Cleanup hook: when a post is permanently deleted, every subscription
   pointing at it is removed automatically.
-- Goodbye-notification dialog: clicking "Delete Permanently" on a post
-  with confirmed subscribers opens a modal offering to send the
-  subscribers a final notification (with an optional author note)
-  before deletion.
+- Goodbye-notification dialog: moving a post with confirmed subscribers
+  to Trash opens a modal offering to send the subscribers a final
+  notification (with an optional author note) before the trash request
+  fires. Available from both the posts list row-action and the
+  edit-screen "Move to Trash" button.
+- Block-editor snackbar: clicking Update on an already-published post
+  with confirmed subscribers surfaces a "Notify N subscribers" snackbar
+  after the save succeeds. The previous metabox checkbox (which had to
+  be ticked *before* saving) is gone.
+
+### Changed
+
+- Update notifications no longer auto-fire on `post_updated`. The
+  editor snackbar above is now the only path; first-publish events
+  still notify automatically.
 
 ## [0.1.0] - 2026-05-17
 

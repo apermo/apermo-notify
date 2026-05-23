@@ -10,14 +10,12 @@ use WP_Post;
 
 /**
  * Wires WordPress post-lifecycle hooks to the dispatch pipeline.
+ *
+ * Only the first publish is automatic. Subsequent updates are opt-in via
+ * the editor-side snackbar in `Editor\UpdateDialog`, which hits a REST
+ * endpoint that calls `Dispatcher::dispatch( $post, 'update' )` directly.
  */
 final class PostHooks {
-
-	/**
-	 * Post-meta key that authors set on a save when they want the update to
-	 * trigger a subscriber notification. Reset after dispatch.
-	 */
-	public const NOTIFY_META = '_apermo_notify_send_on_save';
 
 	/**
 	 * Fires the `publish` event the first time a post transitions to the
@@ -38,45 +36,11 @@ final class PostHooks {
 	}
 
 	/**
-	 * Fires the `update` event when the editor explicitly flagged this save
-	 * via the author-facing checkbox. Resets the flag after dispatch so a
-	 * subsequent save doesn't re-notify.
-	 *
-	 * @param int     $post_id     Post ID being updated.
-	 * @param WP_Post $post_after  Post after the save.
-	 * @param WP_Post $post_before Post before the save.
-	 *
-	 * @return void
-	 */
-	public static function on_updated( int $post_id, WP_Post $post_after, WP_Post $post_before ): void {
-		if ( $post_after->post_status !== 'publish' ) {
-			return;
-		}
-
-		// Skip the update event on the first publish — `on_transition()` will
-		// fire the publish event for that save; sending both would
-		// double-notify subscribers on the same transition.
-		if ( $post_before->post_status !== 'publish' ) {
-			return;
-		}
-
-		$flag = (string) get_post_meta( $post_id, self::NOTIFY_META, true );
-		if ( $flag === '' ) {
-			return;
-		}
-
-		delete_post_meta( $post_id, self::NOTIFY_META );
-
-		Dispatcher::dispatch( $post_after, 'update' );
-	}
-
-	/**
 	 * Registers the hooks.
 	 *
 	 * @return void
 	 */
 	public function register(): void {
 		add_action( 'transition_post_status', [ self::class, 'on_transition' ], 10, 3 );
-		add_action( 'post_updated', [ self::class, 'on_updated' ], 10, 3 );
 	}
 }

@@ -41,9 +41,9 @@ final class PostHooksTest extends TestCase {
 	 */
 	public function test_register_wires_lifecycle_hooks(): void {
 		Functions\expect( 'add_action' )
-			->twice()
+			->once()
 			->withArgs(
-				static fn ( string $hook ): bool => \in_array( $hook, [ 'transition_post_status', 'post_updated' ], true ),
+				static fn ( string $hook ): bool => $hook === 'transition_post_status',
 			);
 
 		( new PostHooks() )->register();

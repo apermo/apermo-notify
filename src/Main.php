@@ -16,6 +16,7 @@ use Apermo\Notify\Admin\SubscribersPage;
 use Apermo\Notify\Cron\Pruner;
 use Apermo\Notify\Cron\Scheduler;
 use Apermo\Notify\Dispatch\PostHooks;
+use Apermo\Notify\Editor\UpdateDialog;
 use Apermo\Notify\Frontend\AutoAppend;
 use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Frontend\ManagePage;
@@ -104,6 +105,7 @@ class Main {
 		( new Eraser() )->register();
 
 		( new PostDeletionListener() )->register();
+		( new UpdateDialog() )->register();
 
 		if ( is_admin() ) {
 			( new PostMetaBox() )->register();

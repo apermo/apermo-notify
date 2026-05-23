@@ -13,15 +13,17 @@ use Apermo\Notify\Subscription\Subscription;
 use WP_Post;
 
 /**
- * Cleans up subscriptions when a post is permanently deleted and powers the
- * goodbye-notification dialog shown on `Delete Permanently` clicks in the
- * posts list table.
+ * Owns the post-removal lifecycle for subscriptions.
  *
- * The dialog is implemented as a JS modal injected on the posts list screen.
- * It reads confirmed-subscriber counts from a localized data blob (so no
- * extra request fires until the admin actually clicks a delete link) and
- * calls the AJAX endpoint registered here before navigating to the original
- * delete URL.
+ * - On `deleted_post`: wipes every subscription pointing at the removed post
+ *   (covers both "Delete Permanently" and "Empty Trash" paths).
+ * - On the posts list and post edit screens: enqueues a JS modal that fires
+ *   for `action=trash` clicks when the post has confirmed subscribers,
+ *   offering to send a goodbye email before the trash request fires.
+ * - Exposes an AJAX endpoint the modal calls to dispatch the goodbye email
+ *   (with an optional author note). The actual trash request runs after
+ *   the AJAX returns; trash is reversible, so subscriptions stay in place
+ *   until the eventual permanent delete triggers the cleanup hook above.
  */
 final class PostDeletionListener {
 
@@ -55,17 +57,15 @@ final class PostDeletionListener {
 	}
 
 	/**
-	 * Returns confirmed-subscriber counts for every post visible on the
-	 * current `edit.php` request.
+	 * Returns counts keyed by post ID for every row visible on `edit.php`.
 	 *
 	 * The values are read from the main query which has already been
-	 * primed by `wp` at this point in the request, so this stays O(1) DB
-	 * queries regardless of the screen's per-page setting.
+	 * primed by `wp` at this point in the request, so this stays one DB
+	 * query regardless of the screen's per-page setting.
 	 *
-	 * @return array<int,int> Map of `post_id => confirmed_count`. Empty if
-	 *                       the current screen has no posts at all.
+	 * @return array<int,int> Map of `post_id => confirmed_count`.
 	 */
-	private static function counts_for_current_screen(): array {
+	private static function counts_for_posts_list(): array {
 		$ids = [];
 		if (
 			isset( $GLOBALS['wp_query'] )
@@ -88,6 +88,22 @@ final class PostDeletionListener {
 		}
 
 		return Repository::counts_by_target( 'post', $ids );
+	}
+
+	/**
+	 * Returns the count for the single post on the post edit screen.
+	 *
+	 * @return array<int,int> Single-entry map, or empty when no post id is in scope.
+	 */
+	private static function counts_for_post_editor(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only screen lookup; no state change.
+		$post_id = isset( $_GET['post'] ) && \is_scalar( $_GET['post'] ) ? (int) $_GET['post'] : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( $post_id <= 0 ) {
+			return [];
+		}
+
+		return Repository::counts_by_target( 'post', [ $post_id ] );
 	}
 
 	/**
@@ -122,14 +138,16 @@ final class PostDeletionListener {
 	 * @return void
 	 */
 	public function maybe_enqueue( string $hook_suffix ): void {
-		if ( $hook_suffix !== 'edit.php' ) {
+		if ( $hook_suffix !== 'edit.php' && $hook_suffix !== 'post.php' ) {
 			return;
 		}
 		if ( ! current_user_can( 'delete_posts' ) ) {
 			return;
 		}
 
-		$counts = self::counts_for_current_screen();
+		$counts = $hook_suffix === 'edit.php'
+			? self::counts_for_posts_list()
+			: self::counts_for_post_editor();
 		if ( $counts === [] ) {
 			return;
 		}
@@ -156,15 +174,15 @@ final class PostDeletionListener {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'action'  => self::AJAX_ACTION,
 				'i18n'    => [
-					'title'             => __( 'Notify subscribers?', 'apermo-notify' ),
+					'title'          => __( 'Notify subscribers before trashing?', 'apermo-notify' ),
 					/* translators: %d: confirmed-subscriber count, rendered client-side */
-					'body'              => __( '%d people are subscribed to this post.', 'apermo-notify' ),
-					'noteLabel'         => __( 'Optional note (added to the email body):', 'apermo-notify' ),
-					'sendAndDelete'     => __( 'Notify and delete', 'apermo-notify' ),
-					'deleteSilently'    => __( 'Delete without notifying', 'apermo-notify' ),
-					'cancel'            => __( 'Cancel', 'apermo-notify' ),
-					'sending'           => __( 'Sending goodbye emails…', 'apermo-notify' ),
-					'sendFailed'        => __( 'Could not send the emails. Delete anyway?', 'apermo-notify' ),
+					'body'           => __( '%d people are subscribed to this post.', 'apermo-notify' ),
+					'noteLabel'      => __( 'Optional note (added to the email body):', 'apermo-notify' ),
+					'sendAndTrash'   => __( 'Notify and trash', 'apermo-notify' ),
+					'trashSilently'  => __( 'Trash without notifying', 'apermo-notify' ),
+					'cancel'         => __( 'Cancel', 'apermo-notify' ),
+					'sending'        => __( 'Sending goodbye emails…', 'apermo-notify' ),
+					'sendFailed'     => __( 'Could not send the emails. Trash anyway?', 'apermo-notify' ),
 				],
 			],
 		);

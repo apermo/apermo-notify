@@ -6,16 +6,20 @@ namespace Apermo\Notify\Admin;
 
 \defined( 'ABSPATH' ) || exit();
 
-use Apermo\Notify\Dispatch\PostHooks;
 use Apermo\Notify\Frontend\AutoAppend;
 use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Repository;
 use WP_Post;
 
 /**
- * Registers the editor meta box that surfaces the subscriber count, the
- * per-post visibility override for the auto-appended form, and the
- * notify-on-next-save checkbox.
+ * Registers the editor meta box that surfaces the subscriber count and the
+ * per-post visibility override for the auto-appended form.
+ *
+ * The previous "Notify subscribers on next save" checkbox was removed when
+ * the editor-side update-notification dialog (`Editor\UpdateDialog`) was
+ * introduced — the dialog offers to notify *after* a successful save,
+ * which is the only point in the editing flow where the author actually
+ * knows whether they want to send.
  */
 final class PostMetaBox {
 
@@ -60,8 +64,6 @@ final class PostMetaBox {
 	 */
 	public function register(): void {
 		add_action( 'add_meta_boxes', [ $this, 'add_box' ] );
-		// `pre_post_update` fires before `post_updated`, so the checkbox meta
-		// is in place when `PostHooks::on_updated` decides whether to dispatch.
 		add_action( 'pre_post_update', [ $this, 'on_pre_update' ], 10, 2 );
 	}
 
@@ -91,7 +93,6 @@ final class PostMetaBox {
 	 */
 	public function render( WP_Post $post ): void {
 		$count        = Repository::count_confirmed_for_target( 'post', $post->ID );
-		$pending      = (string) get_post_meta( $post->ID, PostHooks::NOTIFY_META, true ) !== '';
 		$visibility   = (string) get_post_meta( $post->ID, AutoAppend::VISIBILITY_META, true );
 		$default_on   = Settings::auto_append_default();
 		$default_copy = $default_on
@@ -118,21 +119,6 @@ final class PostMetaBox {
 		echo '<br />';
 		self::radio( AutoAppend::VISIBILITY_HIDE, $visibility, __( 'Hide', 'apermo-notify' ) );
 		echo '</p>';
-
-		echo '<hr />';
-
-		echo '<p><label><input type="checkbox" name="apermo_notify_send_on_save" value="1"'
-			. ( $pending ? ' checked="checked"' : '' )
-			. ' /> '
-			. esc_html__( 'Notify subscribers about this update', 'apermo-notify' )
-			. '</label></p>';
-
-		echo '<p class="description">'
-			. esc_html__(
-				'Only the next save will trigger a notification. The checkbox resets afterwards.',
-				'apermo-notify',
-			)
-			. '</p>';
 	}
 
 	/**
@@ -164,12 +150,6 @@ final class PostMetaBox {
 		$nonce = sanitize_text_field( wp_unslash( $_POST[ self::NONCE_FIELD ] ) );
 		if ( ! wp_verify_nonce( $nonce, self::NONCE_ACTION ) ) {
 			return;
-		}
-
-		if ( isset( $_POST['apermo_notify_send_on_save'] ) ) {
-			update_post_meta( $post_id, PostHooks::NOTIFY_META, '1' );
-		} else {
-			delete_post_meta( $post_id, PostHooks::NOTIFY_META );
 		}
 
 		$visibility = isset( $_POST[ self::VISIBILITY_FIELD ] ) && \is_string( $_POST[ self::VISIBILITY_FIELD ] )

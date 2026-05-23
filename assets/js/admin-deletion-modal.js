@@ -1,7 +1,11 @@
 /**
- * Goodbye-notification dialog wired into the posts list's "Delete Permanently"
- * row action. Triggered only for posts that have at least one confirmed
- * subscriber — count map is provided server-side via wp_localize_script.
+ * Goodbye-notification dialog wired into the "Move to Trash" action on both
+ * the posts list (row-action) and the post edit screen ("Move to Trash"
+ * link). Permanent-delete clicks are ignored: the server-side cleanup hook
+ * handles row removal when a trashed post is purged.
+ *
+ * Triggered only for posts that have at least one confirmed subscriber. The
+ * count map is provided server-side via wp_localize_script.
  */
 ( function ( $ ) {
 	'use strict';
@@ -14,29 +18,32 @@
 		return;
 	}
 
-	/**
-	 * Attaches a one-click handler on the row-action delete links. We bind
-	 * delegated on document so it survives Quick Edit re-renders.
-	 */
 	$( document ).on( 'click', 'a.submitdelete', onDeleteClick );
 
 	function onDeleteClick( e ) {
-		var $link = $( e.currentTarget );
-		var $row = $link.closest( 'tr' );
-		if ( $row.length === 0 ) {
+		var href = $( e.currentTarget ).attr( 'href' ) || '';
+		var action = paramFromHref( href, 'action' );
+		if ( action !== 'trash' ) {
 			return;
 		}
-		var postId = parseInt( ( $row.attr( 'id' ) || '' ).replace( 'post-', '' ), 10 );
+
+		var postId = parseInt( paramFromHref( href, 'post' ), 10 ) || 0;
 		if ( ! postId ) {
 			return;
 		}
+
 		var count = parseInt( counts[ postId ] || 0, 10 );
 		if ( count <= 0 ) {
 			return;
 		}
 
 		e.preventDefault();
-		openModal( postId, count, $link.attr( 'href' ) );
+		openModal( postId, count, href );
+	}
+
+	function paramFromHref( href, key ) {
+		var match = new RegExp( '[?&]' + key + '=([^&#]*)' ).exec( href );
+		return match ? decodeURIComponent( match[ 1 ] ) : '';
 	}
 
 	function openModal( postId, count, deleteUrl ) {
@@ -49,8 +56,8 @@
 					'<textarea class="apermo-notify-modal__note" id="apermo-notify-modal-note" rows="4"></textarea>' +
 					'<p class="apermo-notify-modal__status" aria-live="polite"></p>' +
 					'<div class="apermo-notify-modal__actions">' +
-						'<button type="button" class="button button-primary apermo-notify-modal__send"></button>' +
-						'<button type="button" class="button apermo-notify-modal__silent"></button>' +
+						'<button type="button" class="button button-primary apermo-notify-modal__send-and-trash"></button>' +
+						'<button type="button" class="button apermo-notify-modal__trash-silently"></button>' +
 						'<button type="button" class="button-link apermo-notify-modal__cancel"></button>' +
 					'</div>' +
 				'</div>' +
@@ -61,8 +68,8 @@
 		$overlay.find( '.apermo-notify-modal__body' )
 			.text( ( i18n.body || '' ).replace( '%d', String( count ) ) );
 		$overlay.find( '.apermo-notify-modal__label' ).text( i18n.noteLabel || '' );
-		$overlay.find( '.apermo-notify-modal__send' ).text( i18n.sendAndDelete || '' );
-		$overlay.find( '.apermo-notify-modal__silent' ).text( i18n.deleteSilently || '' );
+		$overlay.find( '.apermo-notify-modal__send-and-trash' ).text( i18n.sendAndTrash || '' );
+		$overlay.find( '.apermo-notify-modal__trash-silently' ).text( i18n.trashSilently || '' );
 		$overlay.find( '.apermo-notify-modal__cancel' ).text( i18n.cancel || '' );
 
 		$( 'body' ).append( $overlay );
@@ -76,11 +83,11 @@
 		$overlay.find( '.apermo-notify-modal__cancel' ).on( 'click', function () {
 			closeModal( $overlay );
 		} );
-		$overlay.find( '.apermo-notify-modal__silent' ).on( 'click', function () {
+		$overlay.find( '.apermo-notify-modal__trash-silently' ).on( 'click', function () {
 			closeModal( $overlay );
 			window.location.href = deleteUrl;
 		} );
-		$overlay.find( '.apermo-notify-modal__send' ).on( 'click', function () {
+		$overlay.find( '.apermo-notify-modal__send-and-trash' ).on( 'click', function () {
 			sendGoodbye( $overlay, postId, deleteUrl );
 		} );
 	}

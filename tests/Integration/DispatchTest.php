@@ -107,12 +107,13 @@ final class DispatchTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Confirms update dispatch fires only when the editor opt-in meta is set
-	 * and clears the meta after dispatch.
+	 * Confirms that a routine post update no longer auto-dispatches — the
+	 * notification path is now an explicit, opt-in REST call fired from the
+	 * editor snackbar.
 	 *
 	 * @return void
 	 */
-	public function test_update_dispatch_requires_editor_optin(): void {
+	public function test_update_does_not_auto_dispatch(): void {
 		$post_id = self::factory()->post->create( [ 'post_status' => 'publish' ] );
 		$this->subscribe_and_confirm( $post_id, 'visitor@example.tld' );
 
@@ -121,22 +122,29 @@ final class DispatchTest extends WP_UnitTestCase {
 		wp_update_post(
 			[
 				'ID'         => $post_id,
-				'post_title' => 'no notify',
+				'post_title' => 'silent update',
 			],
 		);
+
 		$this->assertSame( 0, $this->mail_count );
+	}
 
-		update_post_meta( $post_id, PostHooks::NOTIFY_META, '1' );
+	/**
+	 * Confirms direct calls to Dispatcher::dispatch( …, 'update' ) — the path
+	 * taken by the REST endpoint behind the editor snackbar — still send.
+	 *
+	 * @return void
+	 */
+	public function test_explicit_update_dispatch_sends(): void {
+		$post_id = self::factory()->post->create( [ 'post_status' => 'publish' ] );
+		$this->subscribe_and_confirm( $post_id, 'visitor@example.tld' );
 
-		wp_update_post(
-			[
-				'ID'         => $post_id,
-				'post_title' => 'notify please',
-			],
-		);
+		$post = get_post( $post_id );
+		$this->assertNotNull( $post );
+
+		Dispatcher::dispatch( $post, 'update' );
 
 		$this->assertSame( 1, $this->mail_count );
-		$this->assertSame( '', (string) get_post_meta( $post_id, PostHooks::NOTIFY_META, true ) );
 	}
 
 	/**
