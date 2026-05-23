@@ -29,29 +29,40 @@ final class PrivacyPolicyNotice {
 			return;
 		}
 
-		if ( (int) get_option( 'wp_page_for_privacy_policy' ) > 0 ) {
+		// The check mirrors what FormRenderer uses to decide whether the
+		// consent label links to the policy. `get_privacy_policy_url()`
+		// returns an empty string for both "option unset" and "option set
+		// but target page is draft/trash" — both cases break the consent
+		// label the same way, so both deserve the notice.
+		if ( get_privacy_policy_url() !== '' ) {
 			return;
 		}
 
-		$link = '<a href="' . esc_url( admin_url( 'options-privacy.php' ) ) . '">'
-			. esc_html__( 'Privacy settings', 'apermo-notify' )
-			. '</a>';
-
-		echo '<div class="notice notice-error"><p><strong>'
+		$message = '<strong>'
 			. esc_html__( 'Apermo Notify:', 'apermo-notify' )
 			. '</strong> '
 			. wp_kses(
 				\sprintf(
 					/* translators: %s: link to the Privacy settings screen */
 					__(
-						'No privacy policy page is configured. The subscribe form is GDPR-by-design and requires a published Privacy Policy page — pick or create one in %s.',
+						'No published privacy policy page is configured. The subscribe form is GDPR-by-design and requires a published Privacy Policy page — pick or publish one in %s.',
 						'apermo-notify',
 					),
-					$link,
+					'<a href="' . esc_url( admin_url( 'options-privacy.php' ) ) . '">'
+						. esc_html__( 'Privacy settings', 'apermo-notify' )
+						. '</a>',
 				),
 				[ 'a' => [ 'href' => true ] ],
-			)
-			. '</p></div>';
+			);
+
+		wp_admin_notice(
+			$message,
+			[
+				'type'           => 'error',
+				'dismissible'    => false,
+				'paragraph_wrap' => true,
+			],
+		);
 	}
 
 	/**

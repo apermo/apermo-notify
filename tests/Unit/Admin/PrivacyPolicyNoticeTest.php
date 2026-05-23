@@ -34,6 +34,14 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 		Functions\when( 'esc_url' )->returnArg();
 		Functions\when( 'admin_url' )->alias( static fn ( string $path ): string => 'https://example.tld/wp-admin/' . $path );
 		Functions\when( 'wp_kses' )->alias( static fn ( string $html ): string => $html );
+		Functions\when( 'wp_admin_notice' )->alias(
+			static function ( string $message, array $args ): void {
+				$type        = $args['type'] ?? 'info';
+				$dismissible = ! empty( $args['dismissible'] ) ? ' is-dismissible' : '';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Stub mimics WP's wp_admin_notice; caller is responsible for escaping the message, as in production.
+				echo '<div class="notice notice-' . $type . $dismissible . '"><p>' . $message . '</p></div>';
+			},
+		);
 	}
 
 	/**
@@ -52,9 +60,9 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function test_renders_when_policy_page_is_unset(): void {
+	public function test_renders_when_policy_url_is_empty(): void {
 		Functions\when( 'current_user_can' )->justReturn( true );
-		Functions\when( 'get_option' )->justReturn( 0 );
+		Functions\when( 'get_privacy_policy_url' )->justReturn( '' );
 
 		\ob_start();
 		PrivacyPolicyNotice::maybe_render();
@@ -62,35 +70,40 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 
 		$this->assertStringContainsString( 'notice-error', $output );
 		$this->assertStringContainsString( 'options-privacy.php', $output );
-		$this->assertStringContainsString( 'No privacy policy page is configured', $output );
+		$this->assertStringContainsString( 'No published privacy policy page is configured', $output );
 		$this->assertStringNotContainsString( 'is-dismissible', $output );
 	}
 
 	/**
-	 * Confirms the notice is silent once the privacy policy page is set.
+	 * Confirms the notice fires even when the option points at a draft —
+	 * WordPress's `get_privacy_policy_url()` returns empty for drafts and
+	 * trashed pages, so the visitor-facing form has no link to render.
 	 *
 	 * @return void
 	 */
-	public function test_silent_when_policy_page_is_set(): void {
+	public function test_renders_when_policy_page_is_draft(): void {
 		Functions\when( 'current_user_can' )->justReturn( true );
-		Functions\when( 'get_option' )->justReturn( 7 );
+		// Mirrors the real WP function: it returns '' whenever the assigned
+		// page is missing or non-published, regardless of whether the option
+		// is set. The unit just needs the empty-string branch.
+		Functions\when( 'get_privacy_policy_url' )->justReturn( '' );
 
 		\ob_start();
 		PrivacyPolicyNotice::maybe_render();
 		$output = (string) \ob_get_clean();
 
-		$this->assertSame( '', $output );
+		$this->assertStringContainsString( 'notice-error', $output );
 	}
 
 	/**
-	 * Confirms a string-typed option (legacy serialized "7") still counts
-	 * as a configured page and suppresses the notice.
+	 * Confirms the notice is silent once a published privacy policy page
+	 * is reachable (i.e. `get_privacy_policy_url()` returns a non-empty URL).
 	 *
 	 * @return void
 	 */
-	public function test_silent_when_policy_page_option_is_string(): void {
+	public function test_silent_when_policy_url_is_set(): void {
 		Functions\when( 'current_user_can' )->justReturn( true );
-		Functions\when( 'get_option' )->justReturn( '7' );
+		Functions\when( 'get_privacy_policy_url' )->justReturn( 'https://example.tld/privacy/' );
 
 		\ob_start();
 		PrivacyPolicyNotice::maybe_render();
@@ -107,7 +120,7 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 	 */
 	public function test_silent_for_users_without_manage_options(): void {
 		Functions\when( 'current_user_can' )->justReturn( false );
-		Functions\expect( 'get_option' )->never();
+		Functions\expect( 'get_privacy_policy_url' )->never();
 
 		\ob_start();
 		PrivacyPolicyNotice::maybe_render();
