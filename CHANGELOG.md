@@ -64,6 +64,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update notifications no longer auto-fire on `post_updated`. The
   editor snackbar above is now the only path; first-publish events
   still notify automatically.
+- The "Manage your subscriptions" view is now hosted on a real
+  published page chosen in Settings (the new `manage_page_id` option),
+  rendered via a `the_content` filter so the active theme's page
+  template wraps it — header, footer, sidebars, block templates all
+  work. A non-dismissible admin notice and a DDEV orchestrate
+  fragment mirror the privacy-policy plumbing. Email links fall back
+  to the legacy `/?action=apermo_notify_manage&token=…` shape when
+  the option is unset, so already-sent emails keep resolving.
 
 ## [0.1.0] - 2026-05-17
 
