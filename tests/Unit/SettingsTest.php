@@ -92,6 +92,7 @@ final class SettingsTest extends TestCase {
 					'stale_after_months'  => 12,
 					'prune_mode'          => Settings::PRUNE_MODE_DELETE,
 					'stale_grace_days'    => 14,
+					'manage_page_id'      => 42,
 				],
 				false,
 			);
@@ -104,6 +105,7 @@ final class SettingsTest extends TestCase {
 				'stale_after_months'  => '12',
 				'prune_mode'          => Settings::PRUNE_MODE_DELETE,
 				'stale_grace_days'    => '14',
+				'manage_page_id'      => '42',
 			],
 		);
 	}
@@ -127,6 +129,7 @@ final class SettingsTest extends TestCase {
 					'stale_after_months'  => 6,
 					'prune_mode'          => Settings::PRUNE_MODE_KEEP_ALIVE,
 					'stale_grace_days'    => 7,
+					'manage_page_id'      => 0,
 				],
 				false,
 			);

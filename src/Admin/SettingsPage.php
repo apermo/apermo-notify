@@ -236,6 +236,38 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Renders the manage-page picker.
+	 *
+	 * @param int $value Currently saved page ID (0 = unset).
+	 *
+	 * @return void
+	 */
+	private static function render_manage_page_field( int $value ): void {
+		echo '<tr><th scope="row"><label for="apermo_notify_manage_page_id">'
+			. esc_html__( 'Subscription management page', 'apermo-notify' )
+			. '</label></th><td>';
+		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages echoes core-escaped markup; the `__` arguments are translatable strings consumed inside core.
+		wp_dropdown_pages(
+			[
+				'name'              => 'manage_page_id',
+				'id'                => 'apermo_notify_manage_page_id',
+				'selected'          => $value,
+				'show_option_none'  => __( '— None —', 'apermo-notify' ),
+				'option_none_value' => '0',
+				'post_status'       => 'publish',
+			],
+		);
+		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<p class="description">'
+			. esc_html__(
+				'The page that hosts the "Manage your subscriptions" view linked from every email. Pick or create a published page; the plugin injects the manage UI into its content.',
+				'apermo-notify',
+			)
+			. '</p>';
+		echo '</td></tr>';
+	}
+
+	/**
 	 * Wires the menu entry and POST handler.
 	 *
 	 * @return void
@@ -292,6 +324,7 @@ final class SettingsPage {
 		self::render_stale_after_field( $settings['stale_after_months'] );
 		self::render_prune_mode_field( $settings['prune_mode'] );
 		self::render_stale_grace_field( $settings['stale_grace_days'] );
+		self::render_manage_page_field( $settings['manage_page_id'] );
 		echo '</tbody></table>';
 
 		submit_button( __( 'Save settings', 'apermo-notify' ) );
@@ -336,6 +369,10 @@ final class SettingsPage {
 		$grace_days = isset( $_POST['stale_grace_days'] ) && \is_scalar( $_POST['stale_grace_days'] )
 			? (int) $_POST['stale_grace_days']
 			: 7;
+
+		$manage_page_id = isset( $_POST['manage_page_id'] ) && \is_scalar( $_POST['manage_page_id'] )
+			? (int) $_POST['manage_page_id']
+			: 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		Settings::save(
@@ -346,6 +383,7 @@ final class SettingsPage {
 				'stale_after_months'  => $stale_after,
 				'prune_mode'          => $prune_mode,
 				'stale_grace_days'    => $grace_days,
+				'manage_page_id'      => $manage_page_id,
 			],
 		);
 

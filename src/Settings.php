@@ -57,13 +57,14 @@ final class Settings {
 			'stale_after_months'  => 6,
 			'prune_mode'          => self::PRUNE_MODE_KEEP_ALIVE,
 			'stale_grace_days'    => 7,
+			'manage_page_id'      => 0,
 		];
 	}
 
 	/**
 	 * Returns the full settings array with defaults applied.
 	 *
-	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string, stale_after_months: int, prune_mode: string, stale_grace_days: int}
+	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string, stale_after_months: int, prune_mode: string, stale_grace_days: int, manage_page_id: int}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, [] );
@@ -97,7 +98,8 @@ final class Settings {
 		if ( $mode !== self::PRUNE_MODE_DELETE && $mode !== self::PRUNE_MODE_KEEP_ALIVE ) {
 			$mode = self::PRUNE_MODE_KEEP_ALIVE;
 		}
-		$merged['prune_mode'] = $mode;
+		$merged['prune_mode']     = $mode;
+		$merged['manage_page_id'] = \max( 0, (int) $merged['manage_page_id'] );
 
 		return $merged;
 	}
@@ -160,6 +162,16 @@ final class Settings {
 	}
 
 	/**
+	 * Returns the configured ID of the page that hosts the subscription-
+	 * management UI (zero when unset).
+	 *
+	 * @return int
+	 */
+	public static function manage_page_id(): int {
+		return self::all()['manage_page_id'];
+	}
+
+	/**
 	 * Persists a sanitized settings array.
 	 *
 	 * @param array<string, mixed> $input Raw input (typically from $_POST).
@@ -182,6 +194,7 @@ final class Settings {
 				self::STALE_GRACE_DAYS_CHOICES,
 				7,
 			),
+			'manage_page_id'      => \max( 0, (int) ( $input['manage_page_id'] ?? 0 ) ),
 		];
 
 		update_option( self::OPTION, $value, false );
