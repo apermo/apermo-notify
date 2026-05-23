@@ -14,6 +14,7 @@
 	padding: 1.25em 1.5em;
 	font-size: 1.125rem; /* 18px on a default 16px root, matches theme body */
 	line-height: 1.5;
+	scroll-margin-top: 2em; /* breathing room when the URL fragment scrolls here */
 }
 
 .apermo-notify-form *,
@@ -80,7 +81,11 @@
 	background-color: color-mix(in srgb, currentColor 6%, transparent);
 }
 
-:where(.apermo-notify-message--pending) {
+:where(
+	.apermo-notify-message--pending,
+	.apermo-notify-message--confirmed,
+	.apermo-notify-message--unsubscribed
+) {
 	border-left-color: #00a32a;
 	background-color: rgba(0, 163, 42, 0.08);
 }

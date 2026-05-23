@@ -36,6 +36,7 @@ final class FormRenderer {
 		\ob_start();
 		?>
 		<form
+			id="apermo-notify-form-<?php echo esc_attr( (string) $post_id ); ?>"
 			class="apermo-notify-form"
 			method="post"
 			action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
@@ -159,6 +160,10 @@ final class FormRenderer {
 		switch ( $code ) {
 			case 'pending':
 				return __( 'Almost done — please check your inbox for a confirmation link.', 'apermo-notify' );
+			case 'confirmed':
+				return __( 'Subscription confirmed. You will receive an email when this post is updated.', 'apermo-notify' );
+			case 'unsubscribed':
+				return __( 'You have been unsubscribed from this post.', 'apermo-notify' );
 			case 'duplicate':
 				return __( 'You are already subscribed to this content.', 'apermo-notify' );
 			case 'throttled':

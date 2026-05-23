@@ -6,12 +6,48 @@ namespace Apermo\Notify\Subscription;
 
 \defined( 'ABSPATH' ) || exit();
 
+use Apermo\Notify\Frontend\FormHandler;
 use Apermo\Notify\Mail\Mailer;
 
 /**
  * Handles confirm and unsubscribe links emitted by the Mailer.
  */
 final class OptInFlow {
+
+	/**
+	 * Redirects to the post the subscription points at, scrolling to the form
+	 * and surfacing a flash message via the standard result query var.
+	 *
+	 * Falls back to wp_die() when the target post no longer has a usable
+	 * permalink (e.g. it was deleted between the subscription and the click).
+	 *
+	 * @param Subscription $subscription Subscription whose post to redirect to.
+	 * @param string       $result       Result code for the flash (`confirmed` or `unsubscribed`).
+	 *
+	 * @return void
+	 */
+	private static function redirect_to_target( Subscription $subscription, string $result ): void {
+		$permalink = $subscription->target_type === 'post' && $subscription->target_id > 0
+			? get_permalink( $subscription->target_id )
+			: '';
+
+		if ( ! \is_string( $permalink ) || $permalink === '' ) {
+			wp_die(
+				esc_html__( 'Done. You can close this tab.', 'apermo-notify' ),
+				esc_html__( 'Subscription', 'apermo-notify' ),
+				[
+					'response'  => 200,
+					'back_link' => true,
+				],
+			);
+		}
+
+		$url = add_query_arg( FormHandler::RESULT_QUERY_VAR, $result, $permalink )
+			. '#apermo-notify-form-' . $subscription->target_id;
+
+		wp_safe_redirect( $url );
+		exit();
+	}
 
 	/**
 	 * Registers the admin-post.php endpoints for confirm + unsubscribe links.
@@ -61,14 +97,7 @@ final class OptInFlow {
 		 */
 		do_action( 'apermo_notify_subscription_confirmed', $subscription );
 
-		wp_die(
-			esc_html__( 'Your subscription is confirmed. Thank you!', 'apermo-notify' ),
-			esc_html__( 'Subscription', 'apermo-notify' ),
-			[
-				'response'  => 200,
-				'back_link' => true,
-			],
-		);
+		self::redirect_to_target( $subscription, 'confirmed' );
 	}
 
 	/**
@@ -87,16 +116,22 @@ final class OptInFlow {
 			);
 		}
 
+		$subscription = Repository::find_by_token( $token );
+
 		Repository::unsubscribe( $token );
 
-		wp_die(
-			esc_html__( 'You have been unsubscribed.', 'apermo-notify' ),
-			esc_html__( 'Unsubscribe', 'apermo-notify' ),
-			[
-				'response'  => 200,
-				'back_link' => true,
-			],
-		);
+		if ( $subscription === null ) {
+			wp_die(
+				esc_html__( 'You have been unsubscribed.', 'apermo-notify' ),
+				esc_html__( 'Unsubscribe', 'apermo-notify' ),
+				[
+					'response'  => 200,
+					'back_link' => true,
+				],
+			);
+		}
+
+		self::redirect_to_target( $subscription, 'unsubscribed' );
 	}
 
 	/**
