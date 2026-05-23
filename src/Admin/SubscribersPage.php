@@ -23,9 +23,10 @@ final class SubscribersPage {
 	public const CAPABILITY = 'manage_options';
 
 	/**
-	 * Menu slug.
+	 * Top-level menu slug, shared with the parent so the subscribers screen
+	 * is the default landing page for "Apermo Notify".
 	 */
-	public const SLUG = 'apermo-notify-subscribers';
+	public const SLUG = 'apermo-notify';
 
 	/**
 	 * Fetches recent subscriptions (capped at 200 for v0.1).
@@ -114,14 +115,28 @@ final class SubscribersPage {
 	}
 
 	/**
-	 * Adds the menu entry under "Tools".
+	 * Registers the top-level "Apermo Notify" menu plus the Subscribers
+	 * submenu that acts as the landing page. SettingsPage adds the second
+	 * submenu separately.
 	 *
 	 * @return void
 	 */
 	public function add_menu(): void {
-		add_management_page(
-			__( 'Notify subscribers', 'apermo-notify' ),
-			__( 'Notify subscribers', 'apermo-notify' ),
+		add_menu_page(
+			__( 'Apermo Notify', 'apermo-notify' ),
+			__( 'Apermo Notify', 'apermo-notify' ),
+			self::CAPABILITY,
+			self::SLUG,
+			[ $this, 'render' ],
+			'dashicons-email-alt',
+			76,
+		);
+
+		// Renames the auto-added first submenu from "Apermo Notify" → "Subscribers".
+		add_submenu_page(
+			self::SLUG,
+			__( 'Subscribers', 'apermo-notify' ),
+			__( 'Subscribers', 'apermo-notify' ),
 			self::CAPABILITY,
 			self::SLUG,
 			[ $this, 'render' ],
@@ -140,7 +155,7 @@ final class SubscribersPage {
 
 		$rows = self::recent();
 
-		echo '<div class="wrap"><h1>' . esc_html__( 'Notify subscribers', 'apermo-notify' ) . '</h1>';
+		echo '<div class="wrap"><h1>' . esc_html__( 'Subscribers', 'apermo-notify' ) . '</h1>';
 
 		if ( $rows === [] ) {
 			echo '<p>' . esc_html__( 'No subscriptions yet.', 'apermo-notify' ) . '</p></div>';
