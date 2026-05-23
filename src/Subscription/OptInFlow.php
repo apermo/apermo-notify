@@ -59,6 +59,8 @@ final class OptInFlow {
 		add_action( 'admin_post_' . Mailer::ACTION_CONFIRM, [ $this, 'handle_confirm' ] );
 		add_action( 'admin_post_nopriv_' . Mailer::ACTION_UNSUBSCRIBE, [ $this, 'handle_unsubscribe' ] );
 		add_action( 'admin_post_' . Mailer::ACTION_UNSUBSCRIBE, [ $this, 'handle_unsubscribe' ] );
+		add_action( 'admin_post_nopriv_' . Mailer::ACTION_KEEP_ALIVE, [ $this, 'handle_keep_alive' ] );
+		add_action( 'admin_post_' . Mailer::ACTION_KEEP_ALIVE, [ $this, 'handle_keep_alive' ] );
 	}
 
 	/**
@@ -132,6 +134,42 @@ final class OptInFlow {
 		}
 
 		self::redirect_to_target( $subscription, 'unsubscribed' );
+	}
+
+	/**
+	 * Handles the keep-alive link click sent in the stale-warning email.
+	 *
+	 * Resets the subscription's keep-alive timestamp so the cron stops
+	 * counting it as stale, then redirects to the target post with a
+	 * `kept_alive` flash. Invalid or non-confirmed tokens land on a 410.
+	 *
+	 * @return void
+	 */
+	public function handle_keep_alive(): void {
+		$token = $this->token_from_request();
+
+		if ( $token === '' ) {
+			wp_die(
+				esc_html__( 'Invalid keep-alive link.', 'apermo-notify' ),
+				esc_html__( 'Subscription', 'apermo-notify' ),
+				[ 'response' => 400 ],
+			);
+		}
+
+		$subscription = Repository::extend_keep_alive( $token );
+
+		if ( $subscription === null ) {
+			wp_die(
+				esc_html__(
+					'This keep-alive link is no longer valid. The subscription may have been removed.',
+					'apermo-notify',
+				),
+				esc_html__( 'Subscription', 'apermo-notify' ),
+				[ 'response' => 410 ],
+			);
+		}
+
+		self::redirect_to_target( $subscription, 'kept_alive' );
 	}
 
 	/**
