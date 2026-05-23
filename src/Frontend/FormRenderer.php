@@ -32,48 +32,102 @@ final class FormRenderer {
 
 		$result_code = self::result_code();
 		$message     = self::message_for( $result_code );
-		$intro       = Settings::subscription_text();
 
 		\ob_start();
 		?>
-		<form class="apermo-notify-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php if ( $intro !== '' ) { ?>
-				<div class="apermo-notify-form__intro">
-					<?php echo wp_kses_post( $intro ); ?>
-				</div>
-			<?php } ?>
-			<input type="hidden" name="action" value="<?php echo esc_attr( FormHandler::ACTION ); ?>" />
-			<input type="hidden" name="post_id" value="<?php echo esc_attr( (string) $post_id ); ?>" />
-			<?php wp_nonce_field( FormHandler::NONCE_ACTION ); ?>
-			<p>
-				<label for="apermo-notify-email-<?php echo esc_attr( (string) $post_id ); ?>">
-					<?php esc_html_e( 'Email address', 'apermo-notify' ); ?>
-				</label>
-				<input
-					type="email"
-					id="apermo-notify-email-<?php echo esc_attr( (string) $post_id ); ?>"
-					name="email"
-					required
-					autocomplete="email"
-				/>
-			</p>
-			<p>
-				<button type="submit">
-					<?php esc_html_e( 'Notify me about updates', 'apermo-notify' ); ?>
-				</button>
-			</p>
-			<?php if ( $message !== '' ) { ?>
-				<p
-					class="apermo-notify-message apermo-notify-message--<?php echo esc_attr( $result_code ); ?>"
-					role="status"
-				>
-					<?php echo esc_html( $message ); ?>
-				</p>
-			<?php } ?>
+		<form
+			class="apermo-notify-form wp-block-group"
+			method="post"
+			action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+		>
+			<?php
+			self::render_intro( Settings::subscription_text() );
+			self::render_hidden_inputs( $post_id );
+			self::render_email_field( $post_id );
+			self::render_submit();
+			self::render_message( $result_code, $message );
+			?>
 		</form>
 		<?php
 
 		return (string) \ob_get_clean();
+	}
+
+	/**
+	 * Prints the intro paragraph above the form when configured.
+	 *
+	 * @param string $intro Sanitized intro HTML.
+	 *
+	 * @return void
+	 */
+	private static function render_intro( string $intro ): void {
+		if ( $intro === '' ) {
+			return;
+		}
+		echo '<div class="apermo-notify-form__intro wp-block-paragraph">'
+			. wp_kses_post( $intro )
+			. '</div>';
+	}
+
+	/**
+	 * Prints the hidden action + post_id + nonce inputs.
+	 *
+	 * @param int $post_id Subscription target.
+	 *
+	 * @return void
+	 */
+	private static function render_hidden_inputs( int $post_id ): void {
+		echo '<input type="hidden" name="action" value="' . esc_attr( FormHandler::ACTION ) . '" />';
+		echo '<input type="hidden" name="post_id" value="' . esc_attr( (string) $post_id ) . '" />';
+		wp_nonce_field( FormHandler::NONCE_ACTION );
+	}
+
+	/**
+	 * Prints the email label + input pair.
+	 *
+	 * @param int $post_id Subscription target (used to scope the input ID).
+	 *
+	 * @return void
+	 */
+	private static function render_email_field( int $post_id ): void {
+		$input_id = 'apermo-notify-email-' . $post_id;
+		echo '<div class="apermo-notify-form__field">';
+		echo '<label class="apermo-notify-form__label wp-block-form-input-label" for="'
+			. esc_attr( $input_id ) . '">'
+			. esc_html__( 'Email address', 'apermo-notify' )
+			. '</label>';
+		echo '<input class="apermo-notify-form__input wp-block-form-input-text" type="email" id="'
+			. esc_attr( $input_id ) . '" name="email" required autocomplete="email" />';
+		echo '</div>';
+	}
+
+	/**
+	 * Prints the submit-button container.
+	 *
+	 * @return void
+	 */
+	private static function render_submit(): void {
+		echo '<div class="apermo-notify-form__actions wp-block-button">'
+			. '<button class="apermo-notify-form__submit wp-block-button__link" type="submit">'
+			. esc_html__( 'Notify me about updates', 'apermo-notify' )
+			. '</button></div>';
+	}
+
+	/**
+	 * Prints the flash-message paragraph when present.
+	 *
+	 * @param string $code    Result code.
+	 * @param string $message Resolved message text.
+	 *
+	 * @return void
+	 */
+	private static function render_message( string $code, string $message ): void {
+		if ( $message === '' ) {
+			return;
+		}
+		echo '<p class="apermo-notify-message apermo-notify-message--' . esc_attr( $code ) . '" role="status">'
+			. esc_html( $message )
+			. '</p>';
 	}
 
 	/**
