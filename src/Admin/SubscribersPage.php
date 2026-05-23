@@ -7,13 +7,14 @@ namespace Apermo\Notify\Admin;
 \defined( 'ABSPATH' ) || exit();
 
 use Apermo\Notify\Subscription\Repository;
-use Apermo\Notify\Subscription\Subscription;
 
 /**
- * Renders the admin page listing every subscription row.
+ * Renders the Subscribers admin screen.
  *
- * v0.1 ships a simple table (no pagination/sorting). A WP_List_Table-based
- * implementation lands in v0.2 alongside bulk actions and CSV export.
+ * Owns the menu registration, the surrounding `<form>` that drives the
+ * WP_List_Table (search box + bulk-action posts), and the delete-action
+ * handlers (single via GET, bulk via POST). The table itself is in
+ * SubscribersListTable.
  */
 final class SubscribersPage {
 
@@ -29,80 +30,66 @@ final class SubscribersPage {
 	public const SLUG = 'apermo-notify';
 
 	/**
-	 * Fetches recent subscriptions (capped at 200 for v0.1).
-	 *
-	 * @return array<int, Subscription>
+	 * Nonce action used by the single-row delete link.
 	 */
-	private static function recent(): array {
-		global $wpdb;
+	public const DELETE_NONCE_ACTION = 'apermo_notify_delete_subscription';
 
-		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare(
-				'SELECT * FROM %i ORDER BY created_at DESC LIMIT %d',
-				Repository::table(),
-				200,
-			),
-			\ARRAY_A,
-		);
+	/**
+	 * Processes the delete actions submitted to the page before the table
+	 * is rendered, returning the number of rows actually deleted.
+	 *
+	 * @return int
+	 */
+	private static function handle_actions(): int {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Each branch verifies its own nonce below.
+		$single_action = isset( $_GET['apermo_notify_action'] ) && \is_string( $_GET['apermo_notify_action'] )
+			? sanitize_key( wp_unslash( $_GET['apermo_notify_action'] ) )
+			: '';
+		$single_id = isset( $_GET['id'] ) && \is_scalar( $_GET['id'] )
+			? (int) $_GET['id']
+			: 0;
+		$bulk_action = '';
+		if ( isset( $_POST['action'] ) && \is_string( $_POST['action'] ) && $_POST['action'] !== '-1' ) {
+			$bulk_action = sanitize_key( wp_unslash( $_POST['action'] ) );
+		} elseif ( isset( $_POST['action2'] ) && \is_string( $_POST['action2'] ) && $_POST['action2'] !== '-1' ) {
+			$bulk_action = sanitize_key( wp_unslash( $_POST['action2'] ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		if ( ! \is_array( $rows ) ) {
-			return [];
+		if ( $single_action === 'delete' && $single_id > 0 ) {
+			check_admin_referer( self::DELETE_NONCE_ACTION . '_' . $single_id );
+			return Repository::delete_many( [ $single_id ] );
 		}
 
-		return \array_map( [ Subscription::class, 'from_row' ], $rows );
+		if ( $bulk_action === 'delete' ) {
+			check_admin_referer( self::DELETE_NONCE_ACTION . '_bulk' );
+			return Repository::delete_many( self::posted_ids() );
+		}
+
+		return 0;
 	}
 
 	/**
-	 * Formats a subscription's target for display.
+	 * Reads the bulk-action `ids[]` array from $_POST as positive ints.
 	 *
-	 * @param Subscription $row Subscription.
-	 *
-	 * @return string
+	 * @return array<int, int>
 	 */
-	private static function format_target( Subscription $row ): string {
-		if ( $row->target_type === 'post' ) {
-			$post = get_post( $row->target_id );
-			if ( $post !== null ) {
-				return \sprintf(
-					/* translators: 1: post title, 2: post ID */
-					__( '%1$s (#%2$d)', 'apermo-notify' ),
-					$post->post_title,
-					$row->target_id,
-				);
+	private static function posted_ids(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce checked in handle_actions(); each value is intval'd below.
+		$raw = isset( $_POST['ids'] ) && \is_array( $_POST['ids'] ) ? $_POST['ids'] : [];
+		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+
+		$ids = [];
+		foreach ( $raw as $value ) {
+			if ( \is_scalar( $value ) ) {
+				$id = (int) $value;
+				if ( $id > 0 ) {
+					$ids[] = $id;
+				}
 			}
-			return \sprintf(
-				/* translators: %d: post ID */
-				__( 'post #%d', 'apermo-notify' ),
-				$row->target_id,
-			);
 		}
 
-		return \sprintf(
-			/* translators: 1: target type slug, 2: target identifier */
-			__( '%1$s #%2$d', 'apermo-notify' ),
-			$row->target_type,
-			$row->target_id,
-		);
-	}
-
-	/**
-	 * Maps a status int to a human-readable label.
-	 *
-	 * @param int $status Status constant.
-	 *
-	 * @return string
-	 */
-	private static function format_status( int $status ): string {
-		switch ( $status ) {
-			case Subscription::STATUS_PENDING:
-				return __( 'pending', 'apermo-notify' );
-			case Subscription::STATUS_CONFIRMED:
-				return __( 'confirmed', 'apermo-notify' );
-			case Subscription::STATUS_UNSUBSCRIBED:
-				return __( 'unsubscribed', 'apermo-notify' );
-			default:
-				return (string) $status;
-		}
+		return \array_values( \array_unique( $ids ) );
 	}
 
 	/**
@@ -153,33 +140,58 @@ final class SubscribersPage {
 			return;
 		}
 
-		$rows = self::recent();
+		$deleted = self::handle_actions();
 
-		echo '<div class="wrap"><h1>' . esc_html__( 'Subscribers', 'apermo-notify' ) . '</h1>';
+		$table = new SubscribersListTable();
+		$table->prepare_items();
 
-		if ( $rows === [] ) {
-			echo '<p>' . esc_html__( 'No subscriptions yet.', 'apermo-notify' ) . '</p></div>';
-			return;
+		echo '<div class="wrap"><h1 class="wp-heading-inline">'
+			. esc_html__( 'Subscribers', 'apermo-notify' )
+			. '</h1><hr class="wp-header-end" />';
+
+		if ( $deleted > 0 ) {
+			wp_admin_notice(
+				\sprintf(
+					/* translators: %d: number of deleted rows */
+					_n(
+						'%d subscription deleted.',
+						'%d subscriptions deleted.',
+						$deleted,
+						'apermo-notify',
+					),
+					$deleted,
+				),
+				[
+					'type'           => 'success',
+					'dismissible'    => true,
+					'paragraph_wrap' => true,
+				],
+			);
 		}
 
-		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'Email', 'apermo-notify' ) . '</th>';
-		echo '<th>' . esc_html__( 'Target', 'apermo-notify' ) . '</th>';
-		echo '<th>' . esc_html__( 'Status', 'apermo-notify' ) . '</th>';
-		echo '<th>' . esc_html__( 'Created', 'apermo-notify' ) . '</th>';
-		echo '<th>' . esc_html__( 'Confirmed', 'apermo-notify' ) . '</th>';
-		echo '</tr></thead><tbody>';
+		echo '<form method="get">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" />';
+		$table->search_box(
+			__( 'Search by email', 'apermo-notify' ),
+			'apermo-notify-search',
+		);
+		echo '</form>';
 
-		foreach ( $rows as $row ) {
-			echo '<tr>';
-			echo '<td>' . esc_html( $row->email ) . '</td>';
-			echo '<td>' . esc_html( self::format_target( $row ) ) . '</td>';
-			echo '<td>' . esc_html( self::format_status( $row->status ) ) . '</td>';
-			echo '<td>' . esc_html( $row->created_at ) . '</td>';
-			echo '<td>' . esc_html( $row->confirmed_at ?? '—' ) . '</td>';
-			echo '</tr>';
+		echo '<form method="post">';
+		wp_nonce_field( self::DELETE_NONCE_ACTION . '_bulk' );
+		echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" />';
+		// Preserve current filters so bulk-delete POSTs return to the same view.
+		$status = SubscribersListTable::current_status_filter();
+		if ( $status !== null ) {
+			echo '<input type="hidden" name="status" value="' . esc_attr( (string) $status ) . '" />';
 		}
+		$search = SubscribersListTable::current_search();
+		if ( $search !== '' ) {
+			echo '<input type="hidden" name="s" value="' . esc_attr( $search ) . '" />';
+		}
+		$table->display();
+		echo '</form>';
 
-		echo '</tbody></table></div>';
+		echo '</div>';
 	}
 }

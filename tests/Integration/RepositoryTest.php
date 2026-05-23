@@ -261,4 +261,89 @@ final class RepositoryTest extends WP_UnitTestCase {
 		$this->assertTrue( Token::verify( $token, $token ) );
 		$this->assertFalse( Token::verify( $token, \str_repeat( 'f', 64 ) ) );
 	}
+
+	/**
+	 * Confirms paginate respects the page size and offset.
+	 *
+	 * @return void
+	 */
+	public function test_paginate_respects_page_size_and_offset(): void {
+		for ( $i = 1; $i <= 5; $i++ ) {
+			Repository::create_pending( 'post', $i, '', "v{$i}@example.tld" );
+		}
+
+		$page1 = Repository::paginate( 2, 0, null, '', 'id', 'ASC' );
+		$page2 = Repository::paginate( 2, 2, null, '', 'id', 'ASC' );
+		$page3 = Repository::paginate( 2, 4, null, '', 'id', 'ASC' );
+
+		$this->assertCount( 2, $page1 );
+		$this->assertCount( 2, $page2 );
+		$this->assertCount( 1, $page3 );
+		$this->assertSame( 'v1@example.tld', $page1[0]->email );
+		$this->assertSame( 'v5@example.tld', $page3[0]->email );
+	}
+
+	/**
+	 * Confirms paginate honours the status filter.
+	 *
+	 * @return void
+	 */
+	public function test_paginate_filters_by_status(): void {
+		$pending_id   = Repository::create_pending( 'post', 1, '', 'pending@example.tld' );
+		$confirmed_id = Repository::create_pending( 'post', 2, '', 'confirmed@example.tld' );
+		Repository::confirm( self::token_for( $confirmed_id ) );
+
+		$pending   = Repository::paginate( 20, 0, Subscription::STATUS_PENDING, '', 'id', 'ASC' );
+		$confirmed = Repository::paginate( 20, 0, Subscription::STATUS_CONFIRMED, '', 'id', 'ASC' );
+
+		$this->assertSame( [ $pending_id ], \array_map( static fn ( Subscription $row ): int => $row->id, $pending ) );
+		$this->assertSame( [ $confirmed_id ], \array_map( static fn ( Subscription $row ): int => $row->id, $confirmed ) );
+	}
+
+	/**
+	 * Confirms paginate's email search uses a LIKE match.
+	 *
+	 * @return void
+	 */
+	public function test_paginate_searches_email_substrings(): void {
+		Repository::create_pending( 'post', 1, '', 'alice@example.tld' );
+		Repository::create_pending( 'post', 2, '', 'bob@example.tld' );
+		Repository::create_pending( 'post', 3, '', 'carol@other.tld' );
+
+		$by_example = Repository::paginate( 20, 0, null, 'example', 'id', 'ASC' );
+		$by_alice   = Repository::paginate( 20, 0, null, 'alice', 'id', 'ASC' );
+
+		$this->assertCount( 2, $by_example );
+		$this->assertCount( 1, $by_alice );
+		$this->assertSame( 'alice@example.tld', $by_alice[0]->email );
+	}
+
+	/**
+	 * Confirms count_total honours the same filters as paginate.
+	 *
+	 * @return void
+	 */
+	public function test_count_total_matches_paginate_filter(): void {
+		Repository::create_pending( 'post', 1, '', 'a@example.tld' );
+		Repository::create_pending( 'post', 2, '', 'b@example.tld' );
+		Repository::create_pending( 'post', 3, '', 'c@other.tld' );
+
+		$this->assertSame( 3, Repository::count_total( null, '' ) );
+		$this->assertSame( 2, Repository::count_total( null, 'example' ) );
+		$this->assertSame( 3, Repository::count_total( Subscription::STATUS_PENDING, '' ) );
+		$this->assertSame( 0, Repository::count_total( Subscription::STATUS_CONFIRMED, '' ) );
+	}
+
+	/**
+	 * Confirms paginate falls back to created_at when given an unknown orderby.
+	 *
+	 * @return void
+	 */
+	public function test_paginate_clamps_unknown_orderby(): void {
+		Repository::create_pending( 'post', 1, '', 'a@example.tld' );
+
+		$rows = Repository::paginate( 20, 0, null, '', 'evil_column', 'DESC' );
+
+		$this->assertCount( 1, $rows );
+	}
 }

@@ -565,4 +565,123 @@ final class Repository {
 
 		return \is_int( $updated ) ? $updated : 0;
 	}
+
+	/**
+	 * Returns a paginated, filterable slice of subscriptions for the admin
+	 * list table.
+	 *
+	 * @param int      $per_page Page size (clamped to ≥ 1 by the caller).
+	 * @param int      $offset   Row offset.
+	 * @param int|null $status   Status to filter by, or null for all.
+	 * @param string   $search   LIKE-search applied to the email column; empty for none.
+	 * @param string   $orderby  Column name; validated against an allow-list.
+	 * @param string   $order    `ASC` or `DESC` (case-insensitive).
+	 *
+	 * @return array<int, Subscription>
+	 */
+	public static function paginate(
+		int $per_page,
+		int $offset,
+		?int $status,
+		string $search,
+		string $orderby,
+		string $order
+	): array {
+		global $wpdb;
+
+		$orderby              = self::sanitize_orderby( $orderby );
+		$order                = \strtoupper( $order ) === 'ASC' ? 'ASC' : 'DESC';
+		[ $where_sql, $args ] = self::filter_clause( $status, $search );
+
+		// `%i` placeholders escape both table and orderby identifiers; the
+		// `$order` token is constrained to ASC|DESC above and the
+		// `$where_sql` fragment is built from fixed-string clauses that bind
+		// every value through `%d` / `%s` so direct interpolation is safe.
+		$sql = 'SELECT * FROM %i ' . $where_sql
+			. ' ORDER BY %i ' . $order
+			. ' LIMIT %d OFFSET %d';
+
+		$prepared_args = \array_merge(
+			[ self::table() ],
+			$args,
+			[ $orderby, \max( 1, $per_page ), \max( 0, $offset ) ],
+		);
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare( $sql, $prepared_args ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			\ARRAY_A,
+		);
+
+		if ( ! \is_array( $rows ) ) {
+			return [];
+		}
+
+		return \array_map( [ Subscription::class, 'from_row' ], $rows );
+	}
+
+	/**
+	 * Counts rows matching the same filter the list table is paginating.
+	 *
+	 * @param int|null $status Status to filter by, or null for all.
+	 * @param string   $search LIKE-search applied to the email column; empty for none.
+	 *
+	 * @return int
+	 */
+	public static function count_total( ?int $status, string $search ): int {
+		global $wpdb;
+
+		[ $where_sql, $args ] = self::filter_clause( $status, $search );
+
+		$prepared_args = \array_merge( [ self::table() ], $args );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where_sql is built from fixed string fragments; every value binds through %d/%s.
+		$count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare( 'SELECT COUNT(*) FROM %i ' . $where_sql, $prepared_args ),
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return (int) $count;
+	}
+
+	/**
+	 * Builds the WHERE clause + bound args shared by `paginate` and `count_total`.
+	 *
+	 * @param int|null $status Status filter, or null for any.
+	 * @param string   $search Email search (LIKE-wrapped here).
+	 *
+	 * @return array{0:string,1:array<int, scalar>} Tuple of `[ $sql, $args ]`.
+	 */
+	private static function filter_clause( ?int $status, string $search ): array {
+		$where = [];
+		$args  = [];
+
+		if ( $status !== null ) {
+			$where[] = 'status = %d';
+			$args[]  = $status;
+		}
+
+		$trimmed = \trim( $search );
+		if ( $trimmed !== '' ) {
+			global $wpdb;
+			$where[] = 'email LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $trimmed ) . '%';
+		}
+
+		$sql = $where === [] ? '' : 'WHERE ' . \implode( ' AND ', $where );
+
+		return [ $sql, $args ];
+	}
+
+	/**
+	 * Returns one of the allow-listed orderby columns; defaults to created_at.
+	 *
+	 * @param string $orderby Requested column.
+	 *
+	 * @return string
+	 */
+	private static function sanitize_orderby( string $orderby ): string {
+		$allowed = [ 'email', 'status', 'created_at', 'confirmed_at', 'id' ];
+
+		return \in_array( $orderby, $allowed, true ) ? $orderby : 'created_at';
+	}
 }
