@@ -45,6 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `stale_email_sent_at` columns. Existing v1 rows are backfilled
   (`kept_alive_at = confirmed_at`, `consent_at = created_at`) on upgrade
   so the prune cron doesn't immediately mark legacy data stale.
+- WP_List_Table-based Subscribers admin screen with sortable columns,
+  status filter, email search, pagination, and per-row + bulk delete.
+- Cleanup hook: when a post is permanently deleted, every subscription
+  pointing at it is removed automatically.
+- Goodbye-notification dialog: clicking "Delete Permanently" on a post
+  with confirmed subscribers opens a modal offering to send the
+  subscribers a final notification (with an optional author note)
+  before deletion.
 
 ## [0.1.0] - 2026-05-17
 

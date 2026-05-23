@@ -8,6 +8,7 @@ namespace Apermo\Notify;
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
 use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Admin\PostDeletionListener;
 use Apermo\Notify\Admin\PostMetaBox;
 use Apermo\Notify\Admin\PrivacyPolicyNotice;
 use Apermo\Notify\Admin\SettingsPage;
@@ -101,6 +102,8 @@ class Main {
 		( new PostHooks() )->register();
 		( new Exporter() )->register();
 		( new Eraser() )->register();
+
+		( new PostDeletionListener() )->register();
 
 		if ( is_admin() ) {
 			( new PostMetaBox() )->register();

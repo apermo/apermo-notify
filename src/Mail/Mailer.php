@@ -167,6 +167,39 @@ final class Mailer {
 	}
 
 	/**
+	 * Sends the deletion-notification email when an admin opts in on the
+	 * post-deletion dialog.
+	 *
+	 * @param Subscription $subscription Confirmed subscriber.
+	 * @param WP_Post      $post         Post about to be deleted.
+	 * @param string       $custom_note  Optional free-form author note. May be empty.
+	 *
+	 * @return bool
+	 */
+	public static function send_goodbye( Subscription $subscription, WP_Post $post, string $custom_note ): bool {
+		$manage_url = self::manage_url( $subscription->token );
+
+		$subject = self::subject_for(
+			'goodbye',
+			$subscription,
+			$post,
+			'delete',
+			/* translators: %s: post title */
+			\sprintf( __( 'A post you followed has been removed: "%s"', 'apermo-notify' ), $post->post_title ),
+		);
+
+		$body = self::body_for(
+			'goodbye',
+			$subscription,
+			$post,
+			'delete',
+			self::render_goodbye_body( $post, $manage_url, $custom_note ),
+		);
+
+		return self::send( $subscription->email, $subject, $body );
+	}
+
+	/**
 	 * Builds the absolute URL for a one-click token action.
 	 *
 	 * @param string $action Either ACTION_CONFIRM or ACTION_UNSUBSCRIBE.
@@ -325,6 +358,39 @@ final class Mailer {
 			$post->post_title,
 			$manage_url,
 			$unsubscribe_url,
+		);
+	}
+
+	/**
+	 * Renders the body for the deletion-notice email.
+	 *
+	 * @param WP_Post $post        Post being deleted.
+	 * @param string  $manage_url  Manage-all URL for the subscriber.
+	 * @param string  $custom_note Optional author note from the admin dialog.
+	 *
+	 * @return string
+	 */
+	private static function render_goodbye_body( WP_Post $post, string $manage_url, string $custom_note ): string {
+		$intro = \sprintf(
+			/* translators: %s: post title */
+			__( 'A post you subscribed to — "%s" — has been removed by the author.', 'apermo-notify' ),
+			$post->post_title,
+		);
+
+		$note_block = '';
+		if ( \trim( $custom_note ) !== '' ) {
+			$note_block = "\n\n" . __( 'A note from the author:', 'apermo-notify' ) . "\n\n" . $custom_note;
+		}
+
+		return \sprintf(
+			/* translators: 1: intro, 2: optional author note (already prefixed), 3: manage URL */
+			__(
+				"%1\$s%2\$s\n\nThis subscription has been removed; you don't need to do anything.\n\nTo review every subscription you have on this site:\n%3\$s",
+				'apermo-notify',
+			),
+			$intro,
+			$note_block,
+			$manage_url,
 		);
 	}
 

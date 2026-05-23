@@ -346,4 +346,51 @@ final class RepositoryTest extends WP_UnitTestCase {
 
 		$this->assertCount( 1, $rows );
 	}
+
+	/**
+	 * Confirms delete_for_target wipes every row for the given target
+	 * regardless of status and leaves other posts untouched.
+	 *
+	 * @return void
+	 */
+	public function test_delete_for_target_removes_all_statuses(): void {
+		$keep_pending   = Repository::create_pending( 'post', 1, '', 'keep1@example.tld' );
+		$keep_confirmed = Repository::create_pending( 'post', 1, '', 'keep2@example.tld' );
+		Repository::confirm( self::token_for( $keep_confirmed ) );
+
+		Repository::create_pending( 'post', 7, '', 'doomed-pending@example.tld' );
+		$doomed_confirmed = Repository::create_pending( 'post', 7, '', 'doomed-confirmed@example.tld' );
+		Repository::confirm( self::token_for( $doomed_confirmed ) );
+
+		$deleted = Repository::delete_for_target( 'post', 7 );
+
+		$this->assertSame( 2, $deleted );
+		$this->assertSame( 2, Repository::count_total( null, '' ) );
+		$this->assertNotNull( Repository::find_by_token( self::token_for( $keep_pending ) ) );
+	}
+
+	/**
+	 * Confirms counts_by_target returns confirmed-only counts keyed by ID
+	 * and skips IDs with no confirmed rows.
+	 *
+	 * @return void
+	 */
+	public function test_counts_by_target_returns_confirmed_only(): void {
+		$pending_only = Repository::create_pending( 'post', 1, '', 'pending@example.tld' );
+		$confirmed_a  = Repository::create_pending( 'post', 2, '', 'a@example.tld' );
+		$confirmed_b  = Repository::create_pending( 'post', 2, '', 'b@example.tld' );
+		$confirmed_c  = Repository::create_pending( 'post', 3, '', 'c@example.tld' );
+		Repository::confirm( self::token_for( $confirmed_a ) );
+		Repository::confirm( self::token_for( $confirmed_b ) );
+		Repository::confirm( self::token_for( $confirmed_c ) );
+		// Unused vars suppress the "assigned but never used" hint above.
+		$this->assertGreaterThan( 0, $pending_only );
+
+		$counts = Repository::counts_by_target( 'post', [ 1, 2, 3, 99 ] );
+
+		$this->assertSame( 2, $counts[2] );
+		$this->assertSame( 1, $counts[3] );
+		$this->assertArrayNotHasKey( 1, $counts );
+		$this->assertArrayNotHasKey( 99, $counts );
+	}
 }

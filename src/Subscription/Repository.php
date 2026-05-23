@@ -567,6 +567,74 @@ final class Repository {
 	}
 
 	/**
+	 * Deletes every subscription pointing at the given target, regardless of status.
+	 *
+	 * @param string $type Target type (e.g. `post`).
+	 * @param int    $id   Target identifier.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public static function delete_for_target( string $type, int $id ): int {
+		global $wpdb;
+
+		$deleted = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			[
+				'target_type' => $type,
+				'target_id'   => $id,
+			],
+			[ '%s', '%d' ],
+		);
+
+		return \is_int( $deleted ) ? $deleted : 0;
+	}
+
+	/**
+	 * Returns confirmed-subscriber counts keyed by target ID.
+	 *
+	 * Used by the admin list table to decide whether to surface the
+	 * goodbye-notification dialog on delete.
+	 *
+	 * @param string         $type Target type (e.g. `post`).
+	 * @param array<int,int> $ids  Target IDs to count.
+	 *
+	 * @return array<int,int> Map of `target_id => confirmed_count`. Missing
+	 *                       IDs imply zero.
+	 */
+	public static function counts_by_target( string $type, array $ids ): array {
+		if ( $ids === [] ) {
+			return [];
+		}
+
+		global $wpdb;
+
+		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; type + status bind via placeholders.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT target_id, COUNT(*) AS n FROM %i WHERE target_type = %s AND status = %d AND target_id IN (' . $ids_csv . ') GROUP BY target_id',
+				self::table(),
+				$type,
+				Subscription::STATUS_CONFIRMED,
+			),
+			\ARRAY_A,
+		);
+		// phpcs:enable
+
+		if ( ! \is_array( $rows ) ) {
+			return [];
+		}
+
+		$counts = [];
+		foreach ( $rows as $row ) {
+			$counts[ (int) $row['target_id'] ] = (int) $row['n'];
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Returns a paginated, filterable slice of subscriptions for the admin
 	 * list table.
 	 *
