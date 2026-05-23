@@ -102,9 +102,9 @@ class MainTest extends TestCase {
 		// OPT-IN: confirm-deactivate — delete this stub if you declined the example.
 		Functions\stubs(
 			[
-				'is_admin'      => false,
-				'add_action'    => null,
-				'add_shortcode' => null,
+				'is_admin'   => false,
+				'add_action' => null,
+				'add_filter' => null,
 			],
 		);
 

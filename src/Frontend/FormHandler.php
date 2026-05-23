@@ -7,6 +7,7 @@ namespace Apermo\Notify\Frontend;
 \defined( 'ABSPATH' ) || exit();
 
 use Apermo\Notify\Mail\Mailer;
+use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Repository;
 use Apermo\Notify\Subscription\Subscription;
 use WP_Post;
@@ -84,8 +85,9 @@ final class FormHandler {
 
 		// Anonymous visitors must not be able to discover or subscribe to
 		// drafts, scheduled posts, or private content via a guessed ID, so
-		// gate strictly on `publish` + supported types.
-		if ( $post->post_status !== 'publish' || ! \in_array( $post->post_type, [ 'post', 'page' ], true ) ) {
+		// gate strictly on `publish` + the post types the admin has enabled.
+		$enabled_types = Settings::enabled_post_types();
+		if ( $post->post_status !== 'publish' || ! \in_array( $post->post_type, $enabled_types, true ) ) {
 			$this->redirect_with_result( $post_id, 'invalid' );
 			return;
 		}
