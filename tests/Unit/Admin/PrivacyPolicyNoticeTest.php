@@ -68,7 +68,7 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 		PrivacyPolicyNotice::maybe_render();
 		$output = (string) \ob_get_clean();
 
-		$this->assertStringContainsString( 'notice-error', $output );
+		$this->assertStringContainsString( 'notice-warning', $output );
 		$this->assertStringContainsString( 'options-privacy.php', $output );
 		$this->assertStringContainsString( 'No published privacy policy page is configured', $output );
 		$this->assertStringNotContainsString( 'is-dismissible', $output );
@@ -92,7 +92,7 @@ final class PrivacyPolicyNoticeTest extends TestCase {
 		PrivacyPolicyNotice::maybe_render();
 		$output = (string) \ob_get_clean();
 
-		$this->assertStringContainsString( 'notice-error', $output );
+		$this->assertStringContainsString( 'notice-warning', $output );
 	}
 
 	/**

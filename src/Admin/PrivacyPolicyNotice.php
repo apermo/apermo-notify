@@ -58,7 +58,7 @@ final class PrivacyPolicyNotice {
 		wp_admin_notice(
 			$message,
 			[
-				'type'           => 'error',
+				'type'           => 'warning',
 				'dismissible'    => false,
 				'paragraph_wrap' => true,
 			],
