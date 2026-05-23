@@ -8,6 +8,7 @@
 	"description": "Renders the per-email subscription-management UI for visitors who arrive via a manage link from one of the plugin's emails. Drop it on the page configured under Apermo Notify → Settings.",
 	"textdomain": "apermo-notify",
 	"render": "file:./render.php",
+	"editorScript": "apermo-notify-manage-subscriptions-editor",
 	"supports": {
 		"html": false,
 		"anchor": false,

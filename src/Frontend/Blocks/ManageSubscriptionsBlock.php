@@ -24,11 +24,33 @@ final class ManageSubscriptionsBlock {
 	public const NAME = 'apermo-notify/manage-subscriptions';
 
 	/**
+	 * Script handle for the editor-side block registration. `block.json`
+	 * references this handle via its `editorScript` field; the handle
+	 * itself is registered in `register_block_type()` below so we can
+	 * declare the right `wp-*` dependencies without shipping a
+	 * webpack-style `.asset.php` file.
+	 */
+	private const EDITOR_SCRIPT_HANDLE = 'apermo-notify-manage-subscriptions-editor';
+
+	/**
 	 * Registers the block from its `block.json` manifest.
 	 *
 	 * @return void
 	 */
 	public static function register_block_type(): void {
+		wp_register_script(
+			self::EDITOR_SCRIPT_HANDLE,
+			plugins_url( 'blocks/manage-subscriptions/index.js', Main::file() ),
+			[
+				'wp-blocks',
+				'wp-block-editor',
+				'wp-element',
+				'wp-server-side-render',
+			],
+			Main::VERSION,
+			true,
+		);
+
 		register_block_type( \dirname( Main::file() ) . '/blocks/manage-subscriptions' );
 	}
 
