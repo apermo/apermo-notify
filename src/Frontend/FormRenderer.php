@@ -93,14 +93,47 @@ final class FormRenderer {
 	 */
 	private static function render_email_field( int $post_id ): void {
 		$input_id = 'apermo-notify-email-' . $post_id;
+		$prefill  = self::prefill_email();
+
 		echo '<p class="apermo-notify-form__field comment-form-email">';
 		echo '<label class="apermo-notify-form__label" for="'
 			. esc_attr( $input_id ) . '">'
 			. esc_html__( 'Email address', 'apermo-notify' )
 			. '</label>';
 		echo '<input class="apermo-notify-form__input" type="email" id="'
-			. esc_attr( $input_id ) . '" name="email" required autocomplete="email" />';
+			. esc_attr( $input_id ) . '" name="email" value="' . esc_attr( $prefill )
+			. '" required autocomplete="email" />';
 		echo '</p>';
+	}
+
+	/**
+	 * Reads the base64-encoded email from the redirect URL emitted by
+	 * `OptInFlow::redirect_to_target()` so the form prefills the input
+	 * right after a confirm / unsubscribe / keep-alive click.
+	 *
+	 * Returns an empty string when the param is absent, malformed, or
+	 * decodes to something that doesn't pass `is_email`.
+	 *
+	 * @return string
+	 */
+	private static function prefill_email(): string {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only prefill; value is base64-decoded then validated via is_email below.
+		if ( ! isset( $_GET['apermo_notify_email'] ) || ! \is_string( $_GET['apermo_notify_email'] ) ) {
+			return '';
+		}
+		$raw = (string) wp_unslash( $_GET['apermo_notify_email'] );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		// URL-safe base64 (RFC 4648 §5): `-_` → `+/`, no `=` padding.
+		$padded = \strtr( $raw, '-_', '+/' ) . \str_repeat( '=', ( 4 - ( \strlen( $raw ) % 4 ) ) % 4 );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- URL-safe base64 wrapper around an email; validated via is_email below.
+		$decoded = \base64_decode( $padded, true );
+		if ( ! \is_string( $decoded ) ) {
+			return '';
+		}
+
+		$email = sanitize_email( $decoded );
+		return is_email( $email ) ? $email : '';
 	}
 
 	/**

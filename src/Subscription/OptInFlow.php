@@ -42,8 +42,17 @@ final class OptInFlow {
 			);
 		}
 
-		$url = add_query_arg( FormHandler::RESULT_QUERY_VAR, $result, $permalink )
-			. '#apermo-notify-form-' . $subscription->target_id;
+		$args = [ FormHandler::RESULT_QUERY_VAR => $result ];
+		// Forward a base64-encoded copy of the email so the post's subscribe
+		// form can prefill the input — particularly useful right after an
+		// unsubscribe so re-subscribing is one click + one consent tick.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- URL-safe base64 wrapping of the subscriber email so the form prefill query var stays opaque-ish in browser history.
+		$encoded_email = \rtrim( \strtr( \base64_encode( $subscription->email ), '+/', '-_' ), '=' );
+		if ( $encoded_email !== '' ) {
+			$args['apermo_notify_email'] = $encoded_email;
+		}
+
+		$url = add_query_arg( $args, $permalink ) . '#apermo-notify-form-' . $subscription->target_id;
 
 		wp_safe_redirect( $url );
 		exit();
@@ -55,12 +64,43 @@ final class OptInFlow {
 	 * @return void
 	 */
 	public function register(): void {
+		// admin-post.php endpoints (legacy URLs in already-sent emails).
 		add_action( 'admin_post_nopriv_' . Mailer::ACTION_CONFIRM, [ $this, 'handle_confirm' ] );
 		add_action( 'admin_post_' . Mailer::ACTION_CONFIRM, [ $this, 'handle_confirm' ] );
 		add_action( 'admin_post_nopriv_' . Mailer::ACTION_UNSUBSCRIBE, [ $this, 'handle_unsubscribe' ] );
 		add_action( 'admin_post_' . Mailer::ACTION_UNSUBSCRIBE, [ $this, 'handle_unsubscribe' ] );
 		add_action( 'admin_post_nopriv_' . Mailer::ACTION_KEEP_ALIVE, [ $this, 'handle_keep_alive' ] );
 		add_action( 'admin_post_' . Mailer::ACTION_KEEP_ALIVE, [ $this, 'handle_keep_alive' ] );
+
+		// Post-permalink endpoint (new URLs emitted by `Mailer::post_action_url`).
+		add_action( 'template_redirect', [ $this, 'maybe_handle_post_action' ] );
+	}
+
+	/**
+	 * Intercepts front-end requests carrying `apermo_notify_action` and
+	 * dispatches to the matching handler.
+	 *
+	 * @return void
+	 */
+	public function maybe_handle_post_action(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Token in the query string is the credential.
+		if ( ! isset( $_GET['apermo_notify_action'] ) || ! \is_string( $_GET['apermo_notify_action'] ) ) {
+			return;
+		}
+		$action = sanitize_key( wp_unslash( $_GET['apermo_notify_action'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		switch ( $action ) {
+			case Mailer::ACTION_CONFIRM:
+				$this->handle_confirm();
+				break;
+			case Mailer::ACTION_UNSUBSCRIBE:
+				$this->handle_unsubscribe();
+				break;
+			case Mailer::ACTION_KEEP_ALIVE:
+				$this->handle_keep_alive();
+				break;
+		}
 	}
 
 	/**

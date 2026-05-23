@@ -43,7 +43,7 @@ final class Mailer {
 	 * @return bool Result of wp_mail().
 	 */
 	public static function send_confirm( Subscription $subscription, WP_Post $post ): bool {
-		$confirm_url = self::action_url( self::ACTION_CONFIRM, $subscription->token );
+		$confirm_url = self::post_action_url( self::ACTION_CONFIRM, $subscription );
 
 		$subject = self::subject_for(
 			'confirm',
@@ -75,7 +75,7 @@ final class Mailer {
 	 * @return bool Result of wp_mail().
 	 */
 	public static function send_update( Subscription $subscription, WP_Post $post, string $event ): bool {
-		$unsubscribe_url = self::action_url( self::ACTION_UNSUBSCRIBE, $subscription->token );
+		$unsubscribe_url = self::post_action_url( self::ACTION_UNSUBSCRIBE, $subscription );
 		$manage_url      = self::manage_url( $subscription->token );
 		$permalink       = get_permalink( $post );
 		if ( ! \is_string( $permalink ) ) {
@@ -111,7 +111,7 @@ final class Mailer {
 	 */
 	public static function send_already_subscribed( Subscription $subscription, WP_Post $post ): bool {
 		$manage_url      = self::manage_url( $subscription->token );
-		$unsubscribe_url = self::action_url( self::ACTION_UNSUBSCRIBE, $subscription->token );
+		$unsubscribe_url = self::post_action_url( self::ACTION_UNSUBSCRIBE, $subscription );
 
 		$subject = self::subject_for(
 			'already_subscribed',
@@ -143,7 +143,7 @@ final class Mailer {
 	 * @return bool
 	 */
 	public static function send_stale_warning( Subscription $subscription, ?WP_Post $post, int $grace_days ): bool {
-		$keep_alive_url = self::action_url( self::ACTION_KEEP_ALIVE, $subscription->token );
+		$keep_alive_url = self::post_action_url( self::ACTION_KEEP_ALIVE, $subscription );
 		$manage_url     = self::manage_url( $subscription->token );
 		$post_title     = $post instanceof WP_Post ? $post->post_title : '';
 
@@ -214,6 +214,44 @@ final class Mailer {
 				'token'  => $token,
 			],
 			admin_url( 'admin-post.php' ),
+		);
+	}
+
+	/**
+	 * Builds a post-permalink-based token action URL.
+	 *
+	 * Lands the click on the original post (so the address bar shows a
+	 * familiar URL during the brief redirect) and carries a base64-encoded
+	 * copy of the subscriber email so the post's subscribe form can prefill
+	 * the input when the user is sent back after the action — making re-
+	 * subscribing one click + one consent tick.
+	 *
+	 * Falls back to {@see self::action_url()} when the subscription's target
+	 * isn't a post or no permalink can be resolved.
+	 *
+	 * @param string       $action       One of the ACTION_* constants.
+	 * @param Subscription $subscription Subscription whose token is being acted on.
+	 *
+	 * @return string
+	 */
+	public static function post_action_url( string $action, Subscription $subscription ): string {
+		if ( $subscription->target_type !== 'post' || $subscription->target_id <= 0 ) {
+			return self::action_url( $action, $subscription->token );
+		}
+
+		$permalink = get_permalink( $subscription->target_id );
+		if ( ! \is_string( $permalink ) || $permalink === '' ) {
+			return self::action_url( $action, $subscription->token );
+		}
+
+		return add_query_arg(
+			[
+				'apermo_notify_action' => $action,
+				'token'                => $subscription->token,
+				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- URL-safe base64 wrapping of the subscriber email so the form prefill query var stays opaque-ish in browser history.
+				'apermo_notify_email'  => \rtrim( \strtr( \base64_encode( $subscription->email ), '+/', '-_' ), '=' ),
+			],
+			$permalink,
 		);
 	}
 
