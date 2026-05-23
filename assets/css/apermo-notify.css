@@ -1,50 +1,60 @@
 /*!
  * Apermo Notify — subscribe form
  *
- * A small card with its own typography cascade so theme-inherited heading
- * scales don't blow up the label or input. Every selector is wrapped in
- * `:where()` (specificity 0) so themes override every property without
- * `!important`. Drop the stylesheet entirely with
- * `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
+ * Layout (max-width, box-sizing, padding) uses plain selectors so themes
+ * that put `entry-content > *` rules at specificity >= 0,1,1 don't override
+ * us. Cosmetic rules (colors, borders, radii) use `:where()` so themes
+ * still override those without `!important`. Drop the stylesheet entirely
+ * with `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
  */
 
-:where(.apermo-notify-form) {
+.apermo-notify-form {
+	box-sizing: border-box;
+	max-width: 32em;
 	margin-block: 1.5em;
 	padding: 1.25em 1.5em;
-	max-width: 32em;
-	background-color: color-mix(in srgb, currentColor 4%, transparent);
-	border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-	border-radius: 0.5em;
-	/* Reset the cascade — post-content typography in many themes scales
-	 * everything inside `entry-content`, which made the label and input
-	 * render at heading-like sizes. */
-	font-size: 1rem;
+	font-size: 1.125rem; /* 18px on a default 16px root, matches theme body */
 	line-height: 1.5;
 }
 
-:where(.apermo-notify-form__intro) {
+.apermo-notify-form *,
+.apermo-notify-form *::before,
+.apermo-notify-form *::after {
+	box-sizing: border-box;
+}
+
+:where(.apermo-notify-form) {
+	background-color: color-mix(in srgb, currentColor 4%, transparent);
+	border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+	border-radius: 0.5em;
+}
+
+.apermo-notify-form__intro {
 	margin-block: 0 1em;
 	font-size: inherit;
 }
 
-:where(.apermo-notify-form__field) {
+.apermo-notify-form__field {
 	display: block;
 	margin-block-end: 1em;
 }
 
-:where(.apermo-notify-form__label) {
+.apermo-notify-form__label {
 	display: block;
 	margin-block-end: 0.25em;
-	font-size: 0.875em;
+	font-size: 0.875em; /* slightly smaller than form text — closer to comment-form labels */
 	font-weight: 400;
 	line-height: 1.3;
 }
 
-:where(.apermo-notify-form__input) {
+.apermo-notify-form__input {
 	width: 100%;
 	padding: 0.55em 0.75em;
 	font: inherit;
 	color: inherit;
+}
+
+:where(.apermo-notify-form__input) {
 	background: color-mix(in srgb, currentColor 2%, white);
 	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 	border-radius: 0.25em;
@@ -55,11 +65,11 @@
 	outline-offset: 2px;
 }
 
-:where(.apermo-notify-form__actions) {
+.apermo-notify-form__actions {
 	margin-block-start: 0.75em;
 }
 
-:where(.apermo-notify-form__submit) {
+.apermo-notify-form__submit {
 	cursor: pointer;
 }
 
