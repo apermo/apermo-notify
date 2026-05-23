@@ -88,6 +88,11 @@ class Main {
 	 * @return void
 	 */
 	public static function boot(): void {
+		// Bring the schema up to date when the code's SCHEMA_VERSION is ahead
+		// of the stored db_version. Idempotent and effectively free when in
+		// sync (one autoloaded option read + integer compare).
+		add_action( 'init', [ Activation::class, 'maybe_upgrade' ], 0 );
+
 		// OPT-IN: confirm-deactivate — delete the next 3 lines if you declined the example.
 		if ( is_admin() ) {
 			( new DeactivationFlow() )->register();
