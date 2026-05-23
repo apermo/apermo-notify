@@ -23,19 +23,23 @@ final class Settings {
 	/**
 	 * Returns the default settings array applied to fresh installs.
 	 *
-	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool}
+	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string}
 	 */
 	public static function defaults(): array {
 		return [
 			'enabled_post_types'  => [ 'post' ],
 			'auto_append_default' => true,
+			'subscription_text'   => __(
+				'Want updates on this post? Enter your email and we\'ll let you know whenever it changes.',
+				'apermo-notify',
+			),
 		];
 	}
 
 	/**
 	 * Returns the full settings array with defaults applied.
 	 *
-	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool}
+	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, [] );
@@ -53,6 +57,7 @@ final class Settings {
 			),
 		);
 		$merged['auto_append_default'] = (bool) $merged['auto_append_default'];
+		$merged['subscription_text']   = (string) $merged['subscription_text'];
 
 		return $merged;
 	}
@@ -76,6 +81,15 @@ final class Settings {
 	}
 
 	/**
+	 * Returns the configured subscription intro text shown above the form.
+	 *
+	 * @return string
+	 */
+	public static function subscription_text(): string {
+		return self::all()['subscription_text'];
+	}
+
+	/**
 	 * Persists a sanitized settings array.
 	 *
 	 * @param array<string, mixed> $input Raw input (typically from $_POST).
@@ -92,9 +106,15 @@ final class Settings {
 			}
 		}
 
+		$subscription_text = '';
+		if ( isset( $input['subscription_text'] ) && \is_string( $input['subscription_text'] ) ) {
+			$subscription_text = wp_kses_post( $input['subscription_text'] );
+		}
+
 		$value = [
 			'enabled_post_types'  => \array_values( \array_unique( $enabled ) ),
 			'auto_append_default' => isset( $input['auto_append_default'] ) && (bool) $input['auto_append_default'],
+			'subscription_text'   => $subscription_text,
 		];
 
 		update_option( self::OPTION, $value, false );

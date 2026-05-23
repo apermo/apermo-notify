@@ -38,6 +38,7 @@ final class AutoAppendTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		Functions\when( '__' )->returnArg();
 	}
 
 	/**

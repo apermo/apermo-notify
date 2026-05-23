@@ -6,6 +6,8 @@ namespace Apermo\Notify\Frontend;
 
 \defined( 'ABSPATH' ) || exit();
 
+use Apermo\Notify\Settings;
+
 /**
  * Renders the visitor-facing subscribe form.
  *
@@ -30,10 +32,16 @@ final class FormRenderer {
 
 		$result_code = self::result_code();
 		$message     = self::message_for( $result_code );
+		$intro       = Settings::subscription_text();
 
 		\ob_start();
 		?>
 		<form class="apermo-notify-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php if ( $intro !== '' ) { ?>
+				<div class="apermo-notify-form__intro">
+					<?php echo wp_kses_post( $intro ); ?>
+				</div>
+			<?php } ?>
 			<input type="hidden" name="action" value="<?php echo esc_attr( FormHandler::ACTION ); ?>" />
 			<input type="hidden" name="post_id" value="<?php echo esc_attr( (string) $post_id ); ?>" />
 			<?php wp_nonce_field( FormHandler::NONCE_ACTION ); ?>

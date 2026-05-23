@@ -22,6 +22,7 @@ final class SettingsTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		Functions\when( '__' )->returnArg();
 	}
 
 	/**
@@ -43,6 +44,7 @@ final class SettingsTest extends TestCase {
 		$defaults = Settings::defaults();
 		$this->assertSame( [ 'post' ], $defaults['enabled_post_types'] );
 		$this->assertTrue( $defaults['auto_append_default'] );
+		$this->assertNotSame( '', $defaults['subscription_text'] );
 	}
 
 	/**
@@ -78,6 +80,7 @@ final class SettingsTest extends TestCase {
 	 */
 	public function test_save_sanitizes_and_persists(): void {
 		Functions\when( 'sanitize_key' )->returnArg( 1 );
+		Functions\when( 'wp_kses_post' )->returnArg( 1 );
 		Functions\expect( 'update_option' )
 			->once()
 			->with(
@@ -85,6 +88,7 @@ final class SettingsTest extends TestCase {
 				[
 					'enabled_post_types'  => [ 'post', 'page' ],
 					'auto_append_default' => true,
+					'subscription_text'   => 'Hello visitors',
 				],
 				false,
 			);
@@ -93,6 +97,7 @@ final class SettingsTest extends TestCase {
 			[
 				'enabled_post_types'  => [ 'post', 'page', '', 'post' ],
 				'auto_append_default' => '1',
+				'subscription_text'   => 'Hello visitors',
 			],
 		);
 	}
@@ -104,6 +109,7 @@ final class SettingsTest extends TestCase {
 	 */
 	public function test_save_missing_auto_append_default_is_false(): void {
 		Functions\when( 'sanitize_key' )->returnArg( 1 );
+		Functions\when( 'wp_kses_post' )->returnArg( 1 );
 		Functions\expect( 'update_option' )
 			->once()
 			->with(
@@ -111,6 +117,7 @@ final class SettingsTest extends TestCase {
 				[
 					'enabled_post_types'  => [ 'post' ],
 					'auto_append_default' => false,
+					'subscription_text'   => '',
 				],
 				false,
 			);
