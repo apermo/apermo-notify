@@ -45,7 +45,7 @@ final class PrivacyPolicyNotice {
 				\sprintf(
 					/* translators: %s: link to the Privacy settings screen */
 					__(
-						'No published privacy policy page is configured. The subscribe form is GDPR-by-design and requires a published Privacy Policy page — pick or publish one in %s.',
+						'No published privacy policy page is configured. The subscribe form is GDPR-by-design and expects a published Privacy Policy page — pick or publish one in %s.',
 						'apermo-notify',
 					),
 					'<a href="' . esc_url( admin_url( 'options-privacy.php' ) ) . '">'
