@@ -7,6 +7,7 @@ namespace Apermo\Notify\Editor;
 \defined( 'ABSPATH' ) || exit();
 
 use Apermo\Notify\Dispatch\Dispatcher;
+use Apermo\Notify\Dispatch\SentLog;
 use Apermo\Notify\Main;
 use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Repository;
@@ -178,6 +179,12 @@ final class UpdateDialog {
 		}
 
 		$count = Repository::count_confirmed_for_target( 'post', $post_id );
+
+		// Drop any prior dedup records for this (post, update) pair so the
+		// explicit opt-in send is never blocked by the auto-firing dedup
+		// that the older PostHooks::on_updated flow seeded.
+		SentLog::clear_for_post( $post_id, 'update' );
+
 		Dispatcher::dispatch( $post, 'update' );
 
 		return new WP_REST_Response(

@@ -72,4 +72,32 @@ final class SentLog {
 			[ '%d', '%d', '%s', '%s' ],
 		);
 	}
+
+	/**
+	 * Clears every recorded send for a (post, event) pair.
+	 *
+	 * Used by the editor-initiated update-notification path: the user has
+	 * explicitly asked to notify subscribers about this update, so any
+	 * prior dedup record for the same (post, event) must not block the
+	 * fresh dispatch.
+	 *
+	 * @param int    $post_id Post identifier.
+	 * @param string $event   Event slug ('publish' or 'update').
+	 *
+	 * @return int Rows removed.
+	 */
+	public static function clear_for_post( int $post_id, string $event ): int {
+		global $wpdb;
+
+		$removed = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			[
+				'post_id' => $post_id,
+				'event'   => $event,
+			],
+			[ '%d', '%s' ],
+		);
+
+		return \is_int( $removed ) ? $removed : 0;
+	}
 }
