@@ -7,17 +7,20 @@ namespace Apermo\Notify\Admin;
 \defined( 'ABSPATH' ) || exit();
 
 use Apermo\Notify\Dispatch\PostHooks;
+use Apermo\Notify\Frontend\AutoAppend;
+use Apermo\Notify\Settings;
 use Apermo\Notify\Subscription\Repository;
 use WP_Post;
 
 /**
- * Registers the editor meta box that surfaces the subscriber count and the
- * opt-in checkbox for the next-save notification.
+ * Registers the editor meta box that surfaces the subscriber count, the
+ * per-post visibility override for the auto-appended form, and the
+ * notify-on-next-save checkbox.
  */
 final class PostMetaBox {
 
 	/**
-	 * Nonce action for the checkbox submission.
+	 * Nonce action for the meta-box submission.
 	 */
 	public const NONCE_ACTION = 'apermo_notify_metabox';
 
@@ -25,6 +28,30 @@ final class PostMetaBox {
 	 * Nonce field name.
 	 */
 	public const NONCE_FIELD = 'apermo_notify_metabox_nonce';
+
+	/**
+	 * POST field that carries the visibility override.
+	 */
+	public const VISIBILITY_FIELD = 'apermo_notify_visibility';
+
+	/**
+	 * Prints one radio for the visibility override field.
+	 *
+	 * @param string $value   Radio value ('', 'show', 'hide').
+	 * @param string $current Currently saved value.
+	 * @param string $label   Label text.
+	 *
+	 * @return void
+	 */
+	private static function radio( string $value, string $current, string $label ): void {
+		\printf(
+			'<label><input type="radio" name="%1$s" value="%2$s"%3$s /> %4$s</label>',
+			esc_attr( self::VISIBILITY_FIELD ),
+			esc_attr( $value ),
+			esc_attr( $value === $current ? ' checked="checked"' : '' ),
+			esc_html( $label ),
+		);
+	}
 
 	/**
 	 * Wires the meta-box registration and save handler.
@@ -39,15 +66,15 @@ final class PostMetaBox {
 	}
 
 	/**
-	 * Adds the meta box to post and page edit screens.
+	 * Adds the meta box to every post type that the Settings page has enabled.
 	 *
 	 * @return void
 	 */
 	public function add_box(): void {
-		foreach ( [ 'post', 'page' ] as $screen ) {
+		foreach ( Settings::enabled_post_types() as $screen ) {
 			add_meta_box(
 				'apermo-notify-metabox',
-				__( 'Subscribers', 'apermo-notify' ),
+				__( 'Apermo Notify', 'apermo-notify' ),
 				[ $this, 'render' ],
 				$screen,
 				'side',
@@ -63,8 +90,13 @@ final class PostMetaBox {
 	 * @return void
 	 */
 	public function render( WP_Post $post ): void {
-		$count   = Repository::count_confirmed_for_target( 'post', $post->ID );
-		$pending = (string) get_post_meta( $post->ID, PostHooks::NOTIFY_META, true ) !== '';
+		$count        = Repository::count_confirmed_for_target( 'post', $post->ID );
+		$pending      = (string) get_post_meta( $post->ID, PostHooks::NOTIFY_META, true ) !== '';
+		$visibility   = (string) get_post_meta( $post->ID, AutoAppend::VISIBILITY_META, true );
+		$default_on   = Settings::auto_append_default();
+		$default_copy = $default_on
+			? __( 'Default (shown — set in Settings)', 'apermo-notify' )
+			: __( 'Default (hidden — set in Settings)', 'apermo-notify' );
 
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD );
 
@@ -77,6 +109,17 @@ final class PostMetaBox {
 				),
 			)
 			. '</p>';
+
+		echo '<p><strong>' . esc_html__( 'Form on this post:', 'apermo-notify' ) . '</strong></p>';
+		echo '<p>';
+		self::radio( '', $visibility, $default_copy );
+		echo '<br />';
+		self::radio( AutoAppend::VISIBILITY_SHOW, $visibility, __( 'Show', 'apermo-notify' ) );
+		echo '<br />';
+		self::radio( AutoAppend::VISIBILITY_HIDE, $visibility, __( 'Hide', 'apermo-notify' ) );
+		echo '</p>';
+
+		echo '<hr />';
 
 		echo '<p><label><input type="checkbox" name="apermo_notify_send_on_save" value="1"'
 			. ( $pending ? ' checked="checked"' : '' )
@@ -93,11 +136,7 @@ final class PostMetaBox {
 	}
 
 	/**
-	 * Persists the checkbox state into post meta before the post UPDATE runs.
-	 *
-	 * Hooked to `pre_post_update` rather than `save_post` so the meta is
-	 * already in place when `post_updated` fires (which is where
-	 * {@see PostHooks::on_updated} reads it).
+	 * Persists meta-box state into post meta before the post UPDATE runs.
 	 *
 	 * @param int                  $post_id Post being saved.
 	 * @param array<string, mixed> $data    Sanitized post data being written.
@@ -110,7 +149,7 @@ final class PostMetaBox {
 		}
 
 		$post_type = (string) ( $data['post_type'] ?? '' );
-		if ( ! \in_array( $post_type, [ 'post', 'page' ], true ) ) {
+		if ( ! \in_array( $post_type, Settings::enabled_post_types(), true ) ) {
 			return;
 		}
 
@@ -132,6 +171,16 @@ final class PostMetaBox {
 		} else {
 			delete_post_meta( $post_id, PostHooks::NOTIFY_META );
 		}
+
+		$visibility = isset( $_POST[ self::VISIBILITY_FIELD ] ) && \is_string( $_POST[ self::VISIBILITY_FIELD ] )
+			? sanitize_key( wp_unslash( $_POST[ self::VISIBILITY_FIELD ] ) )
+			: '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( $visibility === AutoAppend::VISIBILITY_SHOW || $visibility === AutoAppend::VISIBILITY_HIDE ) {
+			update_post_meta( $post_id, AutoAppend::VISIBILITY_META, $visibility );
+		} else {
+			delete_post_meta( $post_id, AutoAppend::VISIBILITY_META );
+		}
 	}
 }
