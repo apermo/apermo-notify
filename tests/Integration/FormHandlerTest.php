@@ -76,9 +76,10 @@ final class FormHandlerTest extends WP_UnitTestCase {
 	public function test_valid_submission_creates_pending_row(): void {
 		$nonce = wp_create_nonce( FormHandler::NONCE_ACTION );
 		$_POST = [
-			'post_id'  => (string) $this->post_id,
-			'email'    => 'visitor@example.tld',
-			'_wpnonce' => $nonce,
+			'post_id'               => (string) $this->post_id,
+			'email'                 => 'visitor@example.tld',
+			'apermo_notify_consent' => '1',
+			'_wpnonce'              => $nonce,
 		];
 		// `check_admin_referer()` reads `$_REQUEST['_wpnonce']`, not `$_POST['_wpnonce']`.
 		// PHP only mirrors $_POST into $_REQUEST when `request_order` includes it,
@@ -107,9 +108,10 @@ final class FormHandlerTest extends WP_UnitTestCase {
 		$_SERVER['REMOTE_ADDR'] = '203.0.113.20';
 		$nonce                  = wp_create_nonce( FormHandler::NONCE_ACTION );
 		$_POST                  = [
-			'post_id'  => (string) $this->post_id,
-			'email'    => 'visitor@example.tld',
-			'_wpnonce' => $nonce,
+			'post_id'               => (string) $this->post_id,
+			'email'                 => 'visitor@example.tld',
+			'apermo_notify_consent' => '1',
+			'_wpnonce'              => $nonce,
 		];
 		$_REQUEST['_wpnonce']   = $nonce;
 

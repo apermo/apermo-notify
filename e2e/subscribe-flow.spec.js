@@ -69,6 +69,7 @@ test.describe.serial('apermo-notify v0.1 subscribe flow', () => {
         await expect(form).toBeVisible();
 
         await form.locator('input[name="email"]').fill('e2e-visitor@example.tld');
+        await form.locator('input[name="apermo_notify_consent"]').check();
         await form.locator('button[type="submit"]').click();
 
         // The handler always redirects back with `apermo_notify_result=<code>`.
