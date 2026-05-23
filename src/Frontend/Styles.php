@@ -9,12 +9,13 @@ namespace Apermo\Notify\Frontend;
 use Apermo\Notify\Main;
 
 /**
- * Enqueues the plugin's minimal frontend stylesheet on pages where the
- * subscribe form is actually rendered.
+ * Enqueues the plugin's minimal frontend stylesheet on every frontend page.
  *
- * Themes can opt out entirely with:
+ * Themes that ship their own form styles can drop it with:
  *
- *     add_filter( 'apermo_notify_enqueue_styles', '__return_false' );
+ *     add_action( 'wp_enqueue_scripts', function () {
+ *         wp_dequeue_style( 'apermo-notify' );
+ *     }, 20 );
  */
 final class Styles {
 
@@ -29,41 +30,15 @@ final class Styles {
 	 * @return void
 	 */
 	public function register(): void {
-		add_action( 'wp_enqueue_scripts', [ $this, 'maybe_enqueue' ] );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
 	}
 
 	/**
-	 * Enqueues the stylesheet when AutoAppend will render the form for the
-	 * current page, and the opt-out filter has not vetoed it.
+	 * Enqueues the stylesheet.
 	 *
 	 * @return void
 	 */
-	public function maybe_enqueue(): void {
-		/**
-		 * Filters whether the plugin's stylesheet should be enqueued.
-		 *
-		 * Return false to ship your own theme styles for the form.
-		 *
-		 * @param bool $should_enqueue Default true.
-		 *
-		 * @return bool
-		 */
-		$should_enqueue = (bool) apply_filters( 'apermo_notify_enqueue_styles', true );
-
-		if ( ! $should_enqueue ) {
-			return;
-		}
-
-		if ( ! is_singular() ) {
-			return;
-		}
-
-		// phpcs:ignore Apermo.WordPress.ImplicitPostFunction.MissingArgument -- Frontend enqueue runs once per request; global post is the contract.
-		$post = get_post();
-		if ( $post === null || ! AutoAppend::should_render_for( $post ) ) {
-			return;
-		}
-
+	public function enqueue(): void {
 		wp_enqueue_style(
 			self::HANDLE,
 			plugins_url( 'assets/css/apermo-notify.css', Main::file() ),
