@@ -113,9 +113,15 @@ final class FormHandler {
 
 		$id = Repository::create_pending( 'post', $post_id, '', $email, true );
 		if ( $id === 0 ) {
-			// Repository returns 0 only when the email is already CONFIRMED;
-			// pending or unsubscribed rows are reactivated and return >0.
-			$this->redirect_with_result( $post_id, 'duplicate' );
+			// Email is already CONFIRMED. Don't leak that fact via a distinct
+			// `duplicate` flash — send the legitimate owner a heads-up email
+			// (throttled above) and return the same `pending` response as a
+			// fresh subscribe so the form can't be used to enumerate emails.
+			$existing = Repository::find_by_target_email( 'post', $post_id, '', $email );
+			if ( $existing !== null ) {
+				Mailer::send_already_subscribed( $existing, $post );
+			}
+			$this->redirect_with_result( $post_id, 'pending' );
 			return;
 		}
 
