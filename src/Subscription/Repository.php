@@ -65,7 +65,7 @@ final class Repository {
 
 		$existing = self::find_by_target_email( $target_type, $target_id, $target_meta, $email );
 		if ( $existing === null || $existing->status === Subscription::STATUS_CONFIRMED ) {
-			return $existing === null ? 0 : 0;
+			return 0;
 		}
 
 		return self::reset_to_pending( (int) $existing->id, $token, $timestamp, $consent_at );
