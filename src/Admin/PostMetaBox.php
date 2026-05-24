@@ -49,10 +49,10 @@ final class PostMetaBox {
 	 */
 	private static function radio( string $value, string $current, string $label ): void {
 		\printf(
-			'<label><input type="radio" name="%1$s" value="%2$s"%3$s /> %4$s</label>',
+			'<label><input type="radio" name="%1$s" value="%2$s" %3$s /> %4$s</label>',
 			esc_attr( self::VISIBILITY_FIELD ),
 			esc_attr( $value ),
-			esc_attr( $value === $current ? ' checked="checked"' : '' ),
+			checked( $value, $current, false ),
 			esc_html( $label ),
 		);
 	}
