@@ -85,11 +85,11 @@ final class OptInFlowTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Confirms handle_unsubscribe flips status to unsubscribed.
+	 * Confirms handle_unsubscribe hard-deletes the row.
 	 *
 	 * @return void
 	 */
-	public function test_handle_unsubscribe_marks_unsubscribed(): void {
+	public function test_handle_unsubscribe_deletes_row(): void {
 		$id    = Repository::create_pending( 'post', 1, '', 'visitor@example.tld' );
 		$token = self::token_for( $id );
 		Repository::confirm( $token );
@@ -101,9 +101,7 @@ final class OptInFlowTest extends WP_UnitTestCase {
 		try {
 			( new OptInFlow() )->handle_unsubscribe();
 		} finally {
-			$row = Repository::find_by_token( $token );
-			$this->assertNotNull( $row );
-			$this->assertSame( Subscription::STATUS_UNSUBSCRIBED, $row->status );
+			$this->assertNull( Repository::find_by_token( $token ) );
 		}
 	}
 }

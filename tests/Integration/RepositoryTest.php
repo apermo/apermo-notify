@@ -94,11 +94,13 @@ final class RepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Confirms an unsubscribed subscriber can subscribe again to the same target.
+	 * Confirms a previously-unsubscribed visitor can subscribe again. With
+	 * unsubscribe now hard-deleting the row (GDPR-by-design), a fresh
+	 * subscribe is a brand-new insert rather than a row reactivation.
 	 *
 	 * @return void
 	 */
-	public function test_create_pending_reactivates_unsubscribed(): void {
+	public function test_create_pending_works_after_unsubscribe(): void {
 		$first = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
 		$token = self::token_for( $first );
 		Repository::confirm( $token );
@@ -106,9 +108,9 @@ final class RepositoryTest extends WP_UnitTestCase {
 
 		$second = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
 
-		$this->assertSame( $first, $second );
-
-		$row = Repository::find_by_token( self::token_for( $first ) );
+		$this->assertGreaterThan( 0, $second );
+		$this->assertNull( Repository::find_by_token( $token ) );
+		$row = Repository::find_by_token( self::token_for( $second ) );
 		$this->assertNotNull( $row );
 		$this->assertSame( Subscription::STATUS_PENDING, $row->status );
 		$this->assertNull( $row->confirmed_at );
@@ -174,20 +176,17 @@ final class RepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Confirms unsubscribe() flips status to unsubscribed.
+	 * Confirms unsubscribe() hard-deletes the row.
 	 *
 	 * @return void
 	 */
-	public function test_unsubscribe_flips_status(): void {
+	public function test_unsubscribe_deletes_row(): void {
 		$id    = Repository::create_pending( 'post', 42, '', 'visitor@example.tld' );
 		$token = self::token_for( $id );
 		Repository::confirm( $token );
 
 		$this->assertTrue( Repository::unsubscribe( $token ) );
-
-		$row = Repository::find_by_token( $token );
-		$this->assertNotNull( $row );
-		$this->assertSame( Subscription::STATUS_UNSUBSCRIBED, $row->status );
+		$this->assertNull( Repository::find_by_token( $token ) );
 	}
 
 	/**

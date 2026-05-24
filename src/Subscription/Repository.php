@@ -216,11 +216,18 @@ final class Repository {
 	}
 
 	/**
-	 * Marks a subscription as unsubscribed.
+	 * Removes the subscription matching a token (hard delete).
+	 *
+	 * The plugin is GDPR-by-design: when a subscriber ends the
+	 * relationship (manual link, manage-page bulk action, or admin
+	 * "notify and trash") we drop the row entirely rather than leave a
+	 * soft UNSUBSCRIBED record. There's no audit-trail use case the
+	 * plugin actually exposes, and keeping the PII would breach
+	 * storage-limitation.
 	 *
 	 * @param string $token Token from the unsubscribe URL.
 	 *
-	 * @return bool Whether a row was updated.
+	 * @return bool Whether a row was removed.
 	 */
 	public static function unsubscribe( string $token ): bool {
 		global $wpdb;
@@ -230,15 +237,13 @@ final class Repository {
 			return false;
 		}
 
-		$updated = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$deleted = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
-			[ 'status' => Subscription::STATUS_UNSUBSCRIBED ],
 			[ 'id' => $subscription->id ],
-			[ '%d' ],
 			[ '%d' ],
 		);
 
-		return \is_int( $updated ) && $updated > 0;
+		return \is_int( $deleted ) && $deleted > 0;
 	}
 
 	/**
@@ -551,19 +556,18 @@ final class Repository {
 
 		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; email + statuses use placeholders.
-		$updated = $wpdb->query(
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; email + status bind via placeholders.
+		$deleted = $wpdb->query(
 			$wpdb->prepare(
-				'UPDATE %i SET status = %d WHERE email = %s AND status = %d AND id IN (' . $ids_csv . ')',
+				'DELETE FROM %i WHERE email = %s AND status = %d AND id IN (' . $ids_csv . ')',
 				self::table(),
-				Subscription::STATUS_UNSUBSCRIBED,
 				$email,
 				Subscription::STATUS_CONFIRMED,
 			),
 		);
 		// phpcs:enable
 
-		return \is_int( $updated ) ? $updated : 0;
+		return \is_int( $deleted ) ? $deleted : 0;
 	}
 
 	/**

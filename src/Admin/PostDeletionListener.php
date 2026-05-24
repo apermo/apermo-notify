@@ -228,6 +228,14 @@ final class PostDeletionListener {
 			}
 		}
 
+		// GDPR-by-design: notifying ends the relationship. Drop every
+		// subscription row pointing at this post — the visitor was told
+		// the post is gone, so no further notifications make sense even
+		// if the admin later restores from trash. Silent-trash leaves
+		// rows alone; the deleted_post hook still cleans up on permanent
+		// purge.
+		Repository::delete_for_target( 'post', $post_id );
+
 		wp_send_json_success( [ 'sent' => $sent ] );
 	}
 }

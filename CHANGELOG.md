@@ -64,6 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update notifications no longer auto-fire on `post_updated`. The
   editor snackbar above is now the only path; first-publish events
   still notify automatically.
+- Unsubscribe paths now **hard-delete** instead of soft-flipping the
+  row to `STATUS_UNSUBSCRIBED`. Aligns with GDPR storage-limitation:
+  once the relationship ends, no PII is retained. Affects the
+  token-link unsubscribe, the manage-page bulk action, and the
+  "Notify & Move to trash" admin flow (which now wipes every
+  subscription for the post after sending the goodbye email).
 - The "Manage your subscriptions" view is now hosted on a real
   published page chosen in Settings (the new `manage_page_id` option),
   rendered via a `the_content` filter so the active theme's page

@@ -225,7 +225,7 @@
 				} );
 		} );
 
-		buttonRow.insertBefore( notifyButton, primary );
+		buttonRow.appendChild( notifyButton );
 	}
 
 	function pickPostIdFromUrl() {
