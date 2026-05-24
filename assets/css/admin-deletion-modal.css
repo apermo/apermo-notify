@@ -56,3 +56,20 @@
 .apermo-notify-modal__cancel {
 	margin-left: auto;
 }
+
+.apermo-notify-confirm-note {
+	display: block;
+	margin: 12px 0 0;
+	font-size: 13px;
+}
+
+.apermo-notify-confirm-note label {
+	display: block;
+	margin: 0 0 4px;
+}
+
+.apermo-notify-confirm-note textarea {
+	width: 100%;
+	min-height: 80px;
+	font-family: inherit;
+}

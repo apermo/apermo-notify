@@ -173,6 +173,27 @@
 
 		augmentedDialogs.add( dialog );
 
+		// Inject the optional-author-note textarea just above the button
+		// row. Mirrors the standalone modal on the posts-list screen so
+		// the trash flow's UX is consistent across both surfaces.
+		var buttonRow = primary.parentNode;
+		var noteId = 'apermo-notify-trash-note-' + currentPostId;
+
+		var noteWrap = document.createElement( 'div' );
+		noteWrap.className = 'apermo-notify-confirm-note';
+
+		var noteLabel = document.createElement( 'label' );
+		noteLabel.htmlFor = noteId;
+		noteLabel.textContent = i18n.noteLabel || 'Optional note (added to the email body):';
+
+		var noteInput = document.createElement( 'textarea' );
+		noteInput.id = noteId;
+		noteInput.rows = 4;
+
+		noteWrap.appendChild( noteLabel );
+		noteWrap.appendChild( noteInput );
+		buttonRow.parentNode.insertBefore( noteWrap, buttonRow );
+
 		// Add a sibling button so the user still has the silent
 		// "Move to trash" option alongside the new
 		// "Notify & Move to trash". The new button does the AJAX and then
@@ -185,6 +206,7 @@
 		notifyButton.addEventListener( 'click', function () {
 			notifyButton.disabled = true;
 			primary.disabled = true;
+			noteInput.disabled = true;
 			var originalLabel = notifyButton.textContent;
 			notifyButton.textContent = i18n.sending || 'Sending…';
 
@@ -192,7 +214,7 @@
 				action: data.action,
 				_ajax_nonce: data.nonce,
 				post_id: currentPostId,
-				note: '',
+				note: noteInput.value || '',
 			} )
 				.always( function () {
 					primary.disabled = false;
@@ -203,7 +225,7 @@
 				} );
 		} );
 
-		primary.parentNode.insertBefore( notifyButton, primary );
+		buttonRow.insertBefore( notifyButton, primary );
 	}
 
 	function pickPostIdFromUrl() {
