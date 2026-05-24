@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-05-24
+
+### Added
+
+- `.husky/commit-msg` hook validating conventional-commit prefix and 72-char
+  subject length locally. Mirrors the defaults of
+  `apermo/reusable-workflows`'s `reusable-conventional-commits.yml`
+  enforced by `.github/workflows/pr-validation.yml`, so invalid commits
+  fail at `git commit` time instead of only after `git push`. Activates
+  automatically on `npm install` via the existing `prepare` script. See
+  [#42](https://github.com/apermo/template-wordpress/issues/42).
+
 ## [0.9.0] - 2026-05-02
 
 ### Added
