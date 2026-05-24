@@ -44,7 +44,7 @@ final class Settings {
 	/**
 	 * Returns the default settings array applied to fresh installs.
 	 *
-	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string, stale_after_months: int, prune_mode: string, stale_grace_days: int}
+	 * @return array{enabled_post_types: array<int, string>, auto_append_default: bool, subscription_text: string, stale_after_months: int, prune_mode: string, stale_grace_days: int, manage_page_id: int}
 	 */
 	public static function defaults(): array {
 		return [
