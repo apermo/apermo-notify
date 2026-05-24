@@ -93,7 +93,11 @@ class DeactivationFlow {
 	 */
 	public function render_confirm_page(): void {
 		if ( ! current_user_can( $this->current_capability() ) ) {
-			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ), 403 );
+			wp_die(
+				esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ),
+				esc_html__( 'Apermo Notify', 'apermo-notify' ),
+				[ 'response' => 403 ],
+			);
 		}
 
 		$basename = plugin_basename( Main::file() );
@@ -151,11 +155,19 @@ class DeactivationFlow {
 	 */
 	public function handle_destructive(): void {
 		if ( ! is_user_logged_in() ) {
-			wp_die( esc_html__( 'You must be logged in.', 'apermo-notify' ), 403 );
+			wp_die(
+				esc_html__( 'You must be logged in.', 'apermo-notify' ),
+				esc_html__( 'Apermo Notify', 'apermo-notify' ),
+				[ 'response' => 403 ],
+			);
 		}
 
 		if ( ! current_user_can( $this->current_capability() ) ) {
-			wp_die( esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ), 403 );
+			wp_die(
+				esc_html__( 'You do not have permission to deactivate this plugin.', 'apermo-notify' ),
+				esc_html__( 'Apermo Notify', 'apermo-notify' ),
+				[ 'response' => 403 ],
+			);
 		}
 
 		check_admin_referer( self::DELETE_ACTION );
@@ -165,7 +177,11 @@ class DeactivationFlow {
 			: '';
 
 		if ( $confirm !== '1' ) {
-			wp_die( esc_html__( 'Confirmation checkbox was not checked.', 'apermo-notify' ), 400 );
+			wp_die(
+				esc_html__( 'Confirmation checkbox was not checked.', 'apermo-notify' ),
+				esc_html__( 'Apermo Notify', 'apermo-notify' ),
+				[ 'response' => 400 ],
+			);
 		}
 
 		$this->cleanup_plugin_data();

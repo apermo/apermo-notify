@@ -8,7 +8,6 @@ namespace Apermo\Notify\Tests\Unit\Admin;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use Mockery;
 use PHPUnit\Framework\TestCase;
 use Apermo\Notify\Admin\DeactivationFlow;
 use Apermo\Notify\Main;
@@ -135,7 +134,10 @@ class DeactivationFlowTest extends TestCase {
 
 		Functions\expect( 'wp_die' )
 			->once()
-			->with( Mockery::type( 'string' ), 403 )
+			->withArgs(
+				static fn ( string $message, string $title, array $args ): bool =>
+					( $args['response'] ?? 0 ) === 403,
+			)
 			->andReturnUsing(
 				static function (): never {
 					throw new RuntimeException( 'wp_die_403' );
@@ -167,7 +169,10 @@ class DeactivationFlowTest extends TestCase {
 
 		Functions\expect( 'wp_die' )
 			->once()
-			->with( Mockery::type( 'string' ), 400 )
+			->withArgs(
+				static fn ( string $message, string $title, array $args ): bool =>
+					( $args['response'] ?? 0 ) === 400,
+			)
 			->andReturnUsing(
 				static function (): never {
 					throw new RuntimeException( 'wp_die_400' );
