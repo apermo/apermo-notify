@@ -16,14 +16,17 @@ use WP_Post;
  * Owns the post-removal lifecycle for subscriptions.
  *
  * - On `deleted_post`: wipes every subscription pointing at the removed post
- *   (covers both "Delete Permanently" and "Empty Trash" paths).
+ *   (covers both "Delete Permanently" and "Empty Trash" paths for posts
+ *   that were trashed silently with no notify-then-trash opt-in).
  * - On the posts list and post edit screens: enqueues a JS modal that fires
  *   for `action=trash` clicks when the post has confirmed subscribers,
  *   offering to send a goodbye email before the trash request fires.
  * - Exposes an AJAX endpoint the modal calls to dispatch the goodbye email
- *   (with an optional author note). The actual trash request runs after
- *   the AJAX returns; trash is reversible, so subscriptions stay in place
- *   until the eventual permanent delete triggers the cleanup hook above.
+ *   (with an optional author note). After the emails go out, the same
+ *   handler hard-deletes every subscription row pointing at the post —
+ *   GDPR-by-design: notifying ends the relationship, no PII retained.
+ *   The `deleted_post` cleanup hook above is still the catch-all for the
+ *   silent-trash and eventual-purge paths.
  */
 final class PostDeletionListener {
 
