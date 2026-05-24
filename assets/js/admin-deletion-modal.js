@@ -173,37 +173,37 @@
 
 		augmentedDialogs.add( dialog );
 
-		primary.textContent = i18n.sendAndTrash || 'Notify & Move to trash';
-		primary.addEventListener( 'click', interceptConfirmClick, true );
-	}
+		// Add a sibling button so the user still has the silent
+		// "Move to trash" option alongside the new
+		// "Notify & Move to trash". The new button does the AJAX and then
+		// programmatically triggers the original primary so WP's own
+		// React-driven trash flow handles the actual deletion.
+		var notifyButton = document.createElement( 'button' );
+		notifyButton.type = 'button';
+		notifyButton.className = primary.className;
+		notifyButton.textContent = i18n.sendAndTrash || 'Notify & Move to trash';
+		notifyButton.addEventListener( 'click', function () {
+			notifyButton.disabled = true;
+			primary.disabled = true;
+			var originalLabel = notifyButton.textContent;
+			notifyButton.textContent = i18n.sending || 'Sending…';
 
-	function interceptConfirmClick( e ) {
-		var btn = e.currentTarget;
-		if ( btn.dataset.apermoNotifySent === '1' ) {
-			// Second pass: re-issued by us after the AJAX succeeded. Let
-			// the React handler trash the post.
-			return;
-		}
+			$.post( data.ajaxUrl, {
+				action: data.action,
+				_ajax_nonce: data.nonce,
+				post_id: currentPostId,
+				note: '',
+			} )
+				.always( function () {
+					primary.disabled = false;
+					notifyButton.textContent = originalLabel;
+					// Trigger the original confirm button — React's handler
+					// runs and trashes the post.
+					primary.click();
+				} );
+		} );
 
-		e.preventDefault();
-		e.stopImmediatePropagation();
-
-		btn.disabled = true;
-		var originalLabel = btn.textContent;
-		btn.textContent = i18n.sending || 'Sending…';
-
-		$.post( data.ajaxUrl, {
-			action: data.action,
-			_ajax_nonce: data.nonce,
-			post_id: currentPostId,
-			note: '',
-		} )
-			.always( function () {
-				btn.dataset.apermoNotifySent = '1';
-				btn.disabled = false;
-				btn.textContent = originalLabel;
-				btn.click();
-			} );
+		primary.parentNode.insertBefore( notifyButton, primary );
 	}
 
 	function pickPostIdFromUrl() {
