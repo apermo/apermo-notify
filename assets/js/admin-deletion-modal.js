@@ -119,4 +119,95 @@
 	function closeModal( $overlay ) {
 		$overlay.remove();
 	}
+
+	/* ------------------------------------------------------------------
+	 * Block-editor trash-confirm augmentation
+	 *
+	 * Gutenberg's "Move to trash" opens a ConfirmDialog (role=alertdialog)
+	 * with [Cancel] [Move to trash]. We watch for that dialog to appear,
+	 * and when the post has confirmed subscribers we relabel the primary
+	 * button to "Notify & Move to trash" and wrap its click so the
+	 * goodbye AJAX fires before WP's real trash handler runs.
+	 * ------------------------------------------------------------------ */
+
+	var currentPostId = pickPostIdFromUrl();
+	var augmentedDialogs = new WeakSet();
+
+	if ( typeof MutationObserver === 'function' && currentPostId > 0 ) {
+		var observer = new MutationObserver( scanForTrashDialog );
+		observer.observe( document.body, { childList: true, subtree: true } );
+		// Sweep once in case the dialog opens before the observer attaches.
+		scanForTrashDialog();
+	}
+
+	function scanForTrashDialog() {
+		var dialogs = document.querySelectorAll(
+			'[role="alertdialog"], .components-confirm-dialog__container, .components-modal__frame'
+		);
+		for ( var i = 0; i < dialogs.length; i++ ) {
+			maybeAugmentDialog( dialogs[ i ] );
+		}
+	}
+
+	function maybeAugmentDialog( dialog ) {
+		if ( augmentedDialogs.has( dialog ) ) {
+			return;
+		}
+
+		var primary = dialog.querySelector( '.components-button.is-primary, .components-button.is-destructive' );
+		if ( ! primary ) {
+			return;
+		}
+
+		// Only react when the dialog text mentions trashing — keeps us out of
+		// unrelated ConfirmDialogs (publish, schedule, etc.).
+		var text = ( dialog.textContent || '' ).toLowerCase();
+		if ( text.indexOf( 'trash' ) === -1 && text.indexOf( 'papierkorb' ) === -1 ) {
+			return;
+		}
+
+		var count = parseInt( counts[ currentPostId ] || 0, 10 );
+		if ( count <= 0 ) {
+			return;
+		}
+
+		augmentedDialogs.add( dialog );
+
+		primary.textContent = i18n.sendAndTrash || 'Notify & Move to trash';
+		primary.addEventListener( 'click', interceptConfirmClick, true );
+	}
+
+	function interceptConfirmClick( e ) {
+		var btn = e.currentTarget;
+		if ( btn.dataset.apermoNotifySent === '1' ) {
+			// Second pass: re-issued by us after the AJAX succeeded. Let
+			// the React handler trash the post.
+			return;
+		}
+
+		e.preventDefault();
+		e.stopImmediatePropagation();
+
+		btn.disabled = true;
+		var originalLabel = btn.textContent;
+		btn.textContent = i18n.sending || 'Sending…';
+
+		$.post( data.ajaxUrl, {
+			action: data.action,
+			_ajax_nonce: data.nonce,
+			post_id: currentPostId,
+			note: '',
+		} )
+			.always( function () {
+				btn.dataset.apermoNotifySent = '1';
+				btn.disabled = false;
+				btn.textContent = originalLabel;
+				btn.click();
+			} );
+	}
+
+	function pickPostIdFromUrl() {
+		var match = /[?&]post=(\d+)/.exec( window.location.search );
+		return match ? parseInt( match[ 1 ], 10 ) : 0;
+	}
 } )( jQuery );
