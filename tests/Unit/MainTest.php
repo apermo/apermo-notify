@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Plugin_Name\Tests\Unit;
+namespace Apermo\Notify\Tests\Unit;
 
-// phpcs:disable SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses.IncorrectlyOrderedUses -- The Plugin_Name\* import gets rewritten by setup.sh; final alphabetical position depends on the chosen namespace.
+// phpcs:disable SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses.IncorrectlyOrderedUses -- The Apermo_Notify\* import gets rewritten by setup.sh; final alphabetical position depends on the chosen namespace.
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
-use Plugin_Name\Main;
+use Apermo\Notify\Main;
 
 /**
  * Tests for the Main class.
@@ -81,21 +81,16 @@ class MainTest extends TestCase {
 	}
 
 	/**
-	 * Verifies activate can be called without error.
-	 *
-	 * @return void
-	 */
-	public function test_activate(): void {
-		Main::activate();
-		$this->assertTrue( true );
-	}
-
-	/**
 	 * Verifies deactivate can be called without error.
+	 *
+	 * Activation's smoke test was moved to tests/Integration/ActivationTest.php
+	 * once the real implementation gained DB side effects.
 	 *
 	 * @return void
 	 */
 	public function test_deactivate(): void {
+		Functions\stubs( [ 'wp_clear_scheduled_hook' ] );
+
 		Main::deactivate();
 		$this->assertTrue( true );
 	}
@@ -107,7 +102,13 @@ class MainTest extends TestCase {
 	 */
 	public function test_boot(): void {
 		// OPT-IN: confirm-deactivate — delete this stub if you declined the example.
-		Functions\stubs( [ 'is_admin' => false ] );
+		Functions\stubs(
+			[
+				'is_admin'   => false,
+				'add_action' => null,
+				'add_filter' => null,
+			],
+		);
 
 		Main::boot();
 		$this->assertTrue( true );

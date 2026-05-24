@@ -17,3 +17,6 @@ jobs:
         # (different repo slug) will run it normally.
         if: github.repository != 'apermo/template-wordpress'
         uses: apermo/reusable-workflows/.github/workflows/reusable-plugin-check.yml@main
+        with:
+            exclude-directories: '.ddev,.github,.husky,.wordpress-org,e2e,node_modules,tests,vendor,src/Lib'
+            exclude-files: '.editorconfig,.gitattributes,.gitignore,.lintstagedrc.js,.wp-env.json,CHANGELOG.md,CLAUDE.md,PLAN.md,codecov.yml,composer.json,composer.lock,package.json,package-lock.json,phpcs.xml.dist,phpstan.neon.dist,phpunit.xml.dist,playwright.config.js,wp-tests-config.php.dist'

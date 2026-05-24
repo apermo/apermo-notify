@@ -1,6 +1,6 @@
 {
-    "name": "apermo/plugin-name",
-    "description": "A WordPress plugin-name plugin.",
+    "name": "apermo/apermo-notify",
+    "description": "A WordPress apermo-notify plugin.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "authors": [
@@ -23,19 +23,20 @@
     },
     "autoload": {
         "psr-4": {
-            "Plugin_Name\\": "src/"
+            "Apermo\\Notify\\": "src/",
+            "apermo\\WPTools\\": "src/Lib/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Plugin_Name\\Tests\\": "tests/"
+            "Apermo\\Notify\\Tests\\": "tests/"
         }
     },
     "scripts": {
         "test": "phpunit",
         "test:unit": "phpunit --testsuite Unit",
         "test:integration": "phpunit --testsuite Integration",
-        "analyse": "phpstan analyse --memory-limit=512M",
+        "analyse": "phpstan analyse --memory-limit=1G",
         "cs": "phpcs",
         "cs:fix": "phpcbf"
     },

@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
 <ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    name="plugin-name"
+    name="apermo-notify"
     xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/PHPCSStandards/PHP_CodeSniffer/master/phpcs.xsd">
 
-    <description>PHPCS configuration for plugin-name.</description>
+    <description>PHPCS configuration for apermo-notify.</description>
 
     <file>.</file>
     <exclude-pattern>.ddev/*</exclude-pattern>
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>node_modules/*</exclude-pattern>
+    <!-- Vendored from external gists (see header comments in src/Lib). -->
+    <exclude-pattern>src/Lib/*</exclude-pattern>
+    <!-- Unit-test stubs that intentionally redeclare WordPress core classes. -->
+    <exclude-pattern>tests/Unit/Support/*</exclude-pattern>
 
     <arg name="extensions" value="php"/>
 
@@ -17,21 +21,21 @@
     <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">
-                <element value="plugin-name"/>
+                <element value="apermo-notify"/>
             </property>
         </properties>
     </rule>
 
     <!--
         Project prefix for global functions, hooks, constants,
-        and namespace roots. E.g. prefix "Plugin_Name" allows
-        namespace Plugin_Name\Admin but flags Other\Admin.
+        and namespace roots. E.g. prefix "Apermo_Notify" allows
+        namespace Apermo_Notify\Admin but flags Other\Admin.
     -->
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <properties>
             <property name="prefixes" type="array">
-                <element value="Plugin_Name"/>
-                <element value="plugin_name"/>
+                <element value="Apermo\Notify"/>
+                <element value="apermo_notify"/>
             </property>
         </properties>
         <!-- Test bootstrap uses standard WP test globals, not plugin globals. -->

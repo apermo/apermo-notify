@@ -2,10 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Plugin_Name;
+namespace Apermo\Notify;
+
+\defined( 'ABSPATH' ) || exit();
 
 // OPT-IN: confirm-deactivate — delete this use statement if you declined the example.
-use Plugin_Name\Admin\DeactivationFlow;
+use Apermo\Notify\Admin\DeactivationFlow;
+use Apermo\Notify\Admin\ManagePageNotice;
+use Apermo\Notify\Admin\ManagePageStateLabel;
+use Apermo\Notify\Admin\PostDeletionListener;
+use Apermo\Notify\Admin\PostMetaBox;
+use Apermo\Notify\Admin\PrivacyPolicyNotice;
+use Apermo\Notify\Admin\SettingsPage;
+use Apermo\Notify\Admin\SubscribersPage;
+use Apermo\Notify\Cron\Pruner;
+use Apermo\Notify\Cron\Scheduler;
+use Apermo\Notify\Dispatch\PostHooks;
+use Apermo\Notify\Editor\UpdateDialog;
+use Apermo\Notify\Frontend\AutoAppend;
+use Apermo\Notify\Frontend\Blocks\ManageSubscriptionsBlock;
+use Apermo\Notify\Frontend\FormHandler;
+use Apermo\Notify\Frontend\ManagePage;
+use Apermo\Notify\Frontend\Styles;
+use Apermo\Notify\Privacy\Eraser;
+use Apermo\Notify\Privacy\Exporter;
+use Apermo\Notify\Subscription\OptInFlow;
 
 /**
  * Bootstraps the plugin.
@@ -51,7 +72,8 @@ class Main {
 	 * @return void
 	 */
 	public static function activate(): void {
-		// Activation logic.
+		Activation::activate();
+		Scheduler::schedule();
 	}
 
 	/**
@@ -60,7 +82,7 @@ class Main {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Deactivation logic.
+		Scheduler::unschedule();
 	}
 
 	/**
@@ -69,9 +91,38 @@ class Main {
 	 * @return void
 	 */
 	public static function boot(): void {
+		// Bring the schema up to date when the code's SCHEMA_VERSION is ahead
+		// of the stored db_version. Idempotent and effectively free when in
+		// sync (one autoloaded option read + integer compare).
+		add_action( 'init', [ Activation::class, 'maybe_upgrade' ], 0 );
+
 		// OPT-IN: confirm-deactivate — delete the next 3 lines if you declined the example.
 		if ( is_admin() ) {
 			( new DeactivationFlow() )->register();
+		}
+
+		( new OptInFlow() )->register();
+		( new FormHandler() )->register();
+		( new ManagePage() )->register();
+		( new ManageSubscriptionsBlock() )->register();
+		( new Scheduler() )->register();
+		( new Pruner() )->register();
+		( new AutoAppend() )->register();
+		( new Styles() )->register();
+		( new PostHooks() )->register();
+		( new Exporter() )->register();
+		( new Eraser() )->register();
+
+		( new PostDeletionListener() )->register();
+		( new UpdateDialog() )->register();
+
+		if ( is_admin() ) {
+			( new PostMetaBox() )->register();
+			( new SubscribersPage() )->register();
+			( new SettingsPage() )->register();
+			( new PrivacyPolicyNotice() )->register();
+			( new ManagePageNotice() )->register();
+			( new ManagePageStateLabel() )->register();
 		}
 	}
 }

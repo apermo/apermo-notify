@@ -1,19 +1,19 @@
 <?php
 /*
- * Plugin Name: Plugin_Name
+ * Plugin Name: Apermo Notify
  * Description: A WordPress plugin.
  * Version:     0.1.0
  * Author:      Christoph Daum
  * Author URI:  https://apermo.de
  * License:     GPL-2.0-or-later
- * Text Domain: plugin-name
- * Requires at least: 6.4
+ * Text Domain: apermo-notify
+ * Requires at least: 7.0
  * Requires PHP: 8.1
  */
 
 declare(strict_types=1);
 
-namespace Plugin_Name;
+namespace Apermo\Notify;
 
 \defined( 'ABSPATH' ) || exit();
 
@@ -26,7 +26,7 @@ if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 				wp_kses(
 					\sprintf(
 						/* translators: %s: composer install command */
-						__( 'Please run %s to install the required dependencies.', 'plugin-name' ),
+						__( 'Please run %s to install the required dependencies.', 'apermo-notify' ),
 						'<code>composer install</code>',
 					),
 					[ 'code' => [] ],

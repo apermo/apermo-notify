@@ -13,7 +13,10 @@ xhprof/
 
 # Addon files (managed by ddev add-on)
 commands/
-orchestrate/
+# Ignore everything inside orchestrate/ that the addon owns, but keep the
+# project/ subdir tracked so we can ship per-project orchestrate fragments.
+orchestrate/*
+!orchestrate/project/
 
 # WordPress (downloaded by orchestrate)
 wordpress/

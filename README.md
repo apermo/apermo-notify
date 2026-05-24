@@ -8,7 +8,9 @@ GitHub template repository for bootstrapping WordPress plugins and themes. Ships
 ## Requirements
 
 - PHP 8.1+
-- WordPress 6.4+ (required by `wp_admin_notice()`)
+- WordPress 7.0+ (the `manage-subscriptions` block uses the PHP-only
+  `block.json` render manifest that's reliable from 7.0 onwards;
+  `wp_admin_notice()` from 6.4 is also relied on)
 - Composer
 - Node.js 20+ and npm (activates husky pre-commit hook, runs Playwright)
 - [DDEV](https://ddev.readthedocs.io/) (for local development)

@@ -1,0 +1,137 @@
+/*!
+ * Apermo Notify — subscribe form
+ *
+ * Layout (max-width, box-sizing, padding) uses plain selectors so themes
+ * that put `entry-content > *` rules at specificity >= 0,1,1 don't override
+ * us. Cosmetic rules (colors, borders, radii) use `:where()` so themes
+ * still override those without `!important`. Drop the stylesheet entirely
+ * with `wp_dequeue_style( 'apermo-notify' )` in a theme hook.
+ */
+
+.apermo-notify-form {
+	box-sizing: border-box;
+	margin-block: 1.5em;
+	padding: 1.25em 1.5em;
+	font-size: 1.125rem; /* 18px on a default 16px root, matches theme body */
+	line-height: 1.5;
+	scroll-margin-top: 2em; /* breathing room when the URL fragment scrolls here */
+}
+
+.apermo-notify-form *,
+.apermo-notify-form *::before,
+.apermo-notify-form *::after {
+	box-sizing: border-box;
+}
+
+:where(.apermo-notify-form) {
+	background-color: color-mix(in srgb, currentColor 4%, transparent);
+	border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+	border-radius: 0.5em;
+}
+
+.apermo-notify-form__intro {
+	margin-block: 0 1em;
+	font-size: inherit;
+}
+
+.apermo-notify-form__field {
+	display: block;
+	margin-block-end: 1em;
+}
+
+.apermo-notify-form__label {
+	display: block;
+	margin-block-end: 0.25em;
+	font-size: var(--wp--preset--font-size--small, 14px);
+	font-weight: 400;
+	line-height: 1.3;
+}
+
+.apermo-notify-form__input {
+	width: 100%;
+	padding: 0.55em 0.75em;
+	font: inherit;
+	color: inherit;
+}
+
+:where(.apermo-notify-form__input) {
+	background: color-mix(in srgb, currentColor 2%, white);
+	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+	border-radius: 0.25em;
+}
+
+:where(.apermo-notify-form__input:focus) {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+.apermo-notify-form__actions {
+	margin-block-start: 0.75em;
+}
+
+.apermo-notify-form__submit {
+	cursor: pointer;
+}
+
+:where(.apermo-notify-message) {
+	margin-block-start: 1em;
+	padding: 0.6em 0.9em;
+	border-radius: 0.25em;
+	border-left: 4px solid currentColor;
+	background-color: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+:where(
+	.apermo-notify-message--pending,
+	.apermo-notify-message--confirmed,
+	.apermo-notify-message--unsubscribed
+) {
+	border-left-color: #00a32a;
+	background-color: rgba(0, 163, 42, 0.08);
+}
+
+:where(.apermo-notify-message--duplicate) {
+	border-left-color: #2271b1;
+	background-color: rgba(34, 113, 177, 0.08);
+}
+
+:where(
+	.apermo-notify-message--throttled,
+	.apermo-notify-message--invalid_email,
+	.apermo-notify-message--invalid,
+	.apermo-notify-message--mail_failure
+) {
+	border-left-color: #d63638;
+	background-color: rgba(214, 54, 56, 0.08);
+}
+
+.apermo-notify-manage__list {
+	list-style: none;
+	margin-block: 0;
+	padding-inline-start: 0;
+}
+
+.apermo-notify-manage__item {
+	margin-block: 0.75em;
+}
+
+.apermo-notify-manage__item .apermo-notify-form__label {
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.apermo-notify-manage__title {
+	font-weight: 600;
+}
+
+.apermo-notify-manage__meta {
+	list-style: none;
+	margin: 0.25em 0 0;
+	padding-inline-start: 1.6em;
+	font-size: var(--wp--preset--font-size--small, 0.875em);
+	opacity: 0.75;
+}
+
+.apermo-notify-manage__meta-item {
+	margin-block: 0.1em;
+}
