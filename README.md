@@ -56,7 +56,10 @@ Uses [ddev-orchestrate](https://github.com/apermo/ddev-orchestrate) to download 
 ### Git Hooks
 
 The pre-commit hook (PHPCS + PHPStan) is managed by [husky](https://typicode.github.io/husky/)
-and activates automatically after `npm install`. No manual configuration required.
+and activates automatically after `npm install`. A `commit-msg` hook also
+validates the conventional-commit format locally so invalid messages are
+rejected at `git commit` time, matching the `pr-validation` CI workflow.
+No manual configuration required.
 
 ## Template Sync
 
