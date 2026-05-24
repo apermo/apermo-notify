@@ -30,11 +30,16 @@ final class OptInFlowTest extends TestCase {
 			'admin_post_' . Mailer::ACTION_CONFIRM,
 			'admin_post_nopriv_' . Mailer::ACTION_UNSUBSCRIBE,
 			'admin_post_' . Mailer::ACTION_UNSUBSCRIBE,
+			'admin_post_nopriv_' . Mailer::ACTION_KEEP_ALIVE,
+			'admin_post_' . Mailer::ACTION_KEEP_ALIVE,
+			'template_redirect',
 		];
+
+		$valid_methods = [ 'handle_confirm', 'handle_unsubscribe', 'handle_keep_alive', 'maybe_handle_post_action' ];
 
 		return \in_array( $hook, $valid_hooks, true )
 			&& $callback[0] === $flow
-			&& \in_array( $callback[1], [ 'handle_confirm', 'handle_unsubscribe' ], true );
+			&& \in_array( $callback[1], $valid_methods, true );
 	}
 
 	/**
@@ -58,15 +63,17 @@ final class OptInFlowTest extends TestCase {
 	}
 
 	/**
-	 * Confirms register() wires admin_post and admin_post_nopriv hooks for both actions.
+	 * Confirms register() wires the admin-post endpoints (confirm,
+	 * unsubscribe, keep-alive) plus the template_redirect dispatcher
+	 * that catches the post-permalink action URLs.
 	 *
 	 * @return void
 	 */
-	public function test_register_wires_confirm_and_unsubscribe_endpoints(): void {
+	public function test_register_wires_confirm_unsubscribe_keepalive_and_template_redirect(): void {
 		$flow = new OptInFlow();
 
 		Functions\expect( 'add_action' )
-			->times( 4 )
+			->times( 7 )
 			->withArgs( static fn ( string $hook, array $callback ): bool => self::is_optin_hook( $flow, $hook, $callback ) );
 
 		$flow->register();
