@@ -11,7 +11,7 @@ case "$MSG" in
     Merge*|Revert\ \"*) exit 0 ;;
 esac
 
-if ! printf '%s' "$MSG" | grep -qE "^(${ALLOWED})(\(.+\))?!?: .{1,}$"; then
+if ! printf '%s\n' "$MSG" | grep -qE "^(${ALLOWED})(\(.+\))?!?: .{1,}$"; then
     echo "✘ Commit subject must match: <type>[(scope)][!]: <description>" >&2
     echo "  Allowed types: ${ALLOWED}" >&2
     echo "  Got: $MSG" >&2
