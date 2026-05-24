@@ -154,7 +154,7 @@ final class FormHandler {
 			return 0;
 		}
 
-		return (int) sanitize_text_field( wp_unslash( (string) $_POST['post_id'] ) );
+		return absint( wp_unslash( (string) $_POST['post_id'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
