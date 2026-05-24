@@ -45,6 +45,7 @@ final class ManageSubscriptionsBlock {
 				'wp-blocks',
 				'wp-block-editor',
 				'wp-element',
+				'wp-i18n',
 				'wp-server-side-render',
 			],
 			Main::VERSION,

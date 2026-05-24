@@ -21,6 +21,7 @@
 	var useBlockProps = wp.blockEditor.useBlockProps;
 	var ServerSideRender = wp.serverSideRender;
 	var el = wp.element.createElement;
+	var i18n = ( wp.i18n && wp.i18n.__ ) ? wp.i18n.__ : function ( s ) { return s; };
 
 	registerBlockType( 'apermo-notify/manage-subscriptions', {
 		edit: function () {
@@ -38,7 +39,11 @@
 			return el(
 				'div',
 				props,
-				el( 'em', null, 'Apermo Notify — Manage subscriptions (rendered on the front-end)' ),
+				el(
+					'em',
+					null,
+					i18n( 'Apermo Notify — Manage subscriptions (rendered on the front-end)', 'apermo-notify' ),
+				),
 			);
 		},
 		save: function () {
