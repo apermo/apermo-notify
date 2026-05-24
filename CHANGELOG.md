@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-24
+
+### Added
+
+- Local `.husky/commit-msg` hook synced from
+  [apermo/template-wordpress 0.10.0](https://github.com/apermo/template-wordpress/blob/main/CHANGELOG.md#0100---2026-05-24).
+  Mirrors the conventional-commit rules already enforced by
+  `pr-validation.yml`, so invalid messages fail at `git commit` time
+  instead of after `git push`.
+
 ### Changed
 
 - Removed the `[apermo_notify]` shortcode. The subscribe form is now placed

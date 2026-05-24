@@ -4,7 +4,7 @@ Tags: notifications, subscriptions, email, gdpr, opt-in
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,10 @@ every notification carries a one-click unsubscribe link.
 2. Activate the plugin through the "Plugins" screen in WordPress
 
 == Changelog ==
+
+= 0.1.1 =
+* Template sync to 0.10.0 — adds a local commit-msg git hook that
+  enforces the same conventional-commit rules as the CI workflow.
 
 = 0.1.0 =
 * Initial release
