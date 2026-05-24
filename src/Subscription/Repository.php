@@ -520,7 +520,7 @@ final class Repository {
 
 		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; nothing else is interpolated.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- IDs are intval'd inline; nothing else is interpolated.
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
 				'DELETE FROM %i WHERE id IN (' . $ids_csv . ')',
@@ -556,7 +556,7 @@ final class Repository {
 
 		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; email + status bind via placeholders.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- IDs are intval'd inline; email + status bind via placeholders.
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
 				'DELETE FROM %i WHERE email = %s AND status = %d AND id IN (' . $ids_csv . ')',
@@ -628,7 +628,7 @@ final class Repository {
 
 		$ids_csv = \implode( ',', \array_map( 'intval', $ids ) );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- IDs are intval'd inline; type + status bind via placeholders.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- IDs are intval'd inline; type + status bind via placeholders.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				'SELECT target_id, COUNT(*) AS n FROM %i WHERE target_type = %s AND status = %d AND target_id IN (' . $ids_csv . ') GROUP BY target_id',
@@ -693,8 +693,8 @@ final class Repository {
 			[ $orderby, \max( 1, $per_page ), \max( 0, $offset ) ],
 		);
 
-		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->prepare( $sql, $prepared_args ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare( $sql, $prepared_args ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			\ARRAY_A,
 		);
 
@@ -720,7 +720,7 @@ final class Repository {
 
 		$prepared_args = \array_merge( [ self::table() ], $args );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where_sql is built from fixed string fragments; every value binds through %d/%s.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- $where_sql is built from fixed string fragments; every value binds through %d/%s.
 		$count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare( 'SELECT COUNT(*) FROM %i ' . $where_sql, $prepared_args ),
 		);

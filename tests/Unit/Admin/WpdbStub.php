@@ -30,7 +30,7 @@ final class WpdbStub {
 	 *
 	 * @return int
 	 */
-	public function query( string $sql ): int { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function query( string $sql ): int {
 		unset( $sql );
 		$this->rows_affected = 1;
 		return 1;
@@ -44,7 +44,7 @@ final class WpdbStub {
 	 *
 	 * @return string
 	 */
-	public function prepare( string $sql, mixed ...$args ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function prepare( string $sql, mixed ...$args ): string {
 		unset( $args );
 		return $sql;
 	}

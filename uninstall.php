@@ -32,7 +32,7 @@ global $wpdb;
 // Mirrors `Activation::SUBSCRIPTIONS_TABLE` / `SENT_LOG_TABLE`. Keep these
 // constants and the table names in sync if either side changes.
 foreach ( [ 'apermo_notify_subscriptions', 'apermo_notify_sent_log' ] as $apermo_notify_table_slug ) {
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery, WordPress.DB.RestrictedKeywords, WordPress.WP.GlobalVariablesOverride, WordPress.DB.PreparedSQL.NotPrepared, Apermo.WordPress.NoHardcodedTableNames.Found -- DDL only runs on uninstall; %i quotes the table identifier; the "hardcoded table name" heuristic misreads `DROP TABLE IF EXISTS`.
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, Apermo.WordPress.NoHardcodedTableNames.Found -- DDL only runs on uninstall; %i quotes the table identifier; the "hardcoded table name" heuristic misreads `DROP TABLE IF EXISTS`.
 	$apermo_notify_drop_sql = $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . $apermo_notify_table_slug );
 	$wpdb->query( $apermo_notify_drop_sql );
 	// phpcs:enable

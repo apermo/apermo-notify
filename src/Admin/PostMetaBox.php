@@ -143,7 +143,6 @@ final class PostMetaBox {
 			return;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Checked immediately below.
 		if ( ! isset( $_POST[ self::NONCE_FIELD ] ) || ! \is_string( $_POST[ self::NONCE_FIELD ] ) ) {
 			return;
 		}
@@ -155,7 +154,6 @@ final class PostMetaBox {
 		$visibility = isset( $_POST[ self::VISIBILITY_FIELD ] ) && \is_string( $_POST[ self::VISIBILITY_FIELD ] )
 			? sanitize_key( wp_unslash( $_POST[ self::VISIBILITY_FIELD ] ) )
 			: '';
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( $visibility === AutoAppend::VISIBILITY_SHOW || $visibility === AutoAppend::VISIBILITY_HIDE ) {
 			update_post_meta( $post_id, AutoAppend::VISIBILITY_META, $visibility );

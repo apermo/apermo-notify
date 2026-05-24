@@ -41,7 +41,6 @@ final class SubscribersPage {
 	 * @return int
 	 */
 	private static function handle_actions(): int {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Each branch verifies its own nonce below.
 		$single_action = isset( $_GET['apermo_notify_action'] ) && \is_string( $_GET['apermo_notify_action'] )
 			? sanitize_key( wp_unslash( $_GET['apermo_notify_action'] ) )
 			: '';
@@ -54,7 +53,6 @@ final class SubscribersPage {
 		} elseif ( isset( $_POST['action2'] ) && \is_string( $_POST['action2'] ) && $_POST['action2'] !== '-1' ) {
 			$bulk_action = sanitize_key( wp_unslash( $_POST['action2'] ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( $single_action === 'delete' && $single_id > 0 ) {
 			check_admin_referer( self::DELETE_NONCE_ACTION . '_' . $single_id );
