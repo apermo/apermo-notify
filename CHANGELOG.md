@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Bootstrap no longer shows a false "run `composer install`" notice when the
+  plugin is installed via a parent project's Composer (e.g. Bedrock). The
+  guard now tests whether `Main` is reachable via any autoloader instead of
+  assuming `vendor/autoload.php` must live inside the plugin directory.
+  ([#13](https://github.com/apermo/apermo-notify/issues/13))
+
 ## [0.1.1] - 2026-05-24
 
 ### Added
