@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-25
+
+### Security
+
+- `require_post_id()` in the subscribe form now rejects malformed input
+  (`"abc"`, `"5xyz"`, `"-5"`, `" 5 "`, `"5.0"`) instead of coercing it with
+  `absint()`. `absint("5xyz")` returned `5`, which could resolve to an
+  unrelated record. The handler now accepts only strings of ASCII digits
+  and returns the `0` sentinel for anything else.
+  ([#12](https://github.com/apermo/apermo-notify/issues/12))
+
+### Fixed
+
+- Bootstrap no longer shows a false "run `composer install`" notice when the
+  plugin is installed via a parent project's Composer (e.g. Bedrock). The
+  guard now tests whether `Main` is reachable via any autoloader instead of
+  assuming `vendor/autoload.php` must live inside the plugin directory.
+  ([#13](https://github.com/apermo/apermo-notify/issues/13))
+
 ## [0.1.1] - 2026-05-24
 
 ### Added

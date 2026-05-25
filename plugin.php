@@ -2,7 +2,7 @@
 /*
  * Plugin Name: Apermo Notify
  * Description: A WordPress plugin.
- * Version:     0.1.1
+ * Version:     0.1.2
  * Author:      Christoph Daum
  * Author URI:  https://apermo.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,11 @@ namespace Apermo\Notify;
 
 \defined( 'ABSPATH' ) || exit();
 
-if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+if ( \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/vendor/autoload.php';
+}
+
+if ( ! \class_exists( Main::class ) ) {
 	add_action(
 		'admin_notices',
 		// phpcs:ignore Universal.FunctionDeclarations.NoLongClosures.ExceedsMaximum
@@ -37,7 +41,5 @@ if ( ! \file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	);
 	return;
 }
-
-require_once __DIR__ . '/vendor/autoload.php';
 
 Main::init( __FILE__ );
