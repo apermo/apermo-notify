@@ -144,17 +144,25 @@ final class FormHandler {
 	}
 
 	/**
-	 * Reads the post_id from the request, sanitized.
+	 * Reads the post_id from the request, rejecting malformed input.
+	 *
+	 * Only accepts a string of ASCII digits. Non-numeric, signed, decimal,
+	 * or whitespace-padded values are rejected outright rather than coerced
+	 * — `absint()` would silently turn `"5xyz"` into `5` and `"-5"` into `5`,
+	 * which can map to an unrelated record.
 	 *
 	 * @return int Zero when missing or malformed.
 	 */
 	private function require_post_id(): int {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is checked after we know the post.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ctype_digit() on the raw string is the validation; (int) is the cast.
 		if ( ! isset( $_POST['post_id'] ) || ! \is_scalar( $_POST['post_id'] ) ) {
 			return 0;
 		}
 
-		return absint( wp_unslash( (string) $_POST['post_id'] ) );
+		$raw = wp_unslash( (string) $_POST['post_id'] );
+		return \ctype_digit( $raw ) ? (int) $raw : 0;
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 

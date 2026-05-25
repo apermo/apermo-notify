@@ -8,6 +8,7 @@ use Apermo\Notify\Frontend\FormHandler;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use RuntimeException;
 use WP_Post;
 
@@ -108,6 +109,41 @@ final class FormHandlerTest extends TestCase {
 			$this->fail( 'Expected redirect-driven RuntimeException was not thrown.' );
 		} catch ( RuntimeException $caught ) {
 			$this->assertSame( 'redirected', $caught->getMessage() );
+		}
+	}
+
+	/**
+	 * Confirms require_post_id() accepts only ASCII-digit strings and rejects
+	 * everything else with the 0 sentinel — covers cases where absint() would
+	 * silently coerce malformed input to a real (but unrelated) ID.
+	 *
+	 * @return void
+	 */
+	public function test_require_post_id_rejects_malformed_input(): void {
+		Functions\stubs(
+			[
+				'wp_unslash' => static fn ( $value ) => $value,
+			],
+		);
+
+		$cases = [
+			'non-numeric'       => [ 'abc', 0 ],
+			'numeric prefix'    => [ '5xyz', 0 ],
+			'negative integer'  => [ '-5', 0 ],
+			'whitespace padded' => [ ' 5 ', 0 ],
+			'decimal'           => [ '5.0', 0 ],
+			'empty string'      => [ '', 0 ],
+			'array input'       => [ [ '5' ], 0 ],
+			'plain digits'      => [ '5', 5 ],
+			'multi-digit'       => [ '12345', 12345 ],
+		];
+
+		$method = new ReflectionMethod( FormHandler::class, 'require_post_id' );
+		$handler = new FormHandler();
+
+		foreach ( $cases as $label => [ $raw, $expected ] ) {
+			$_POST = [ 'post_id' => $raw ];
+			$this->assertSame( $expected, $method->invoke( $handler ), $label );
 		}
 	}
 }
