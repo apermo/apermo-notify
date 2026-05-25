@@ -154,16 +154,14 @@ final class FormHandler {
 	 * @return int Zero when missing or malformed.
 	 */
 	private function require_post_id(): int {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is checked after we know the post.
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ctype_digit() on the raw string is the validation; (int) is the cast.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is checked after we know the post.
 		if ( ! isset( $_POST['post_id'] ) || ! \is_scalar( $_POST['post_id'] ) ) {
 			return 0;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce checked after we know the post; ctype_digit() validates the raw string.
 		$raw = wp_unslash( (string) $_POST['post_id'] );
 		return \ctype_digit( $raw ) ? (int) $raw : 0;
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
