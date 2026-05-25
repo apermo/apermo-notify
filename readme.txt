@@ -4,7 +4,7 @@ Tags: notifications, subscriptions, email, gdpr, opt-in
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,13 @@ every notification carries a one-click unsubscribe link.
 2. Activate the plugin through the "Plugins" screen in WordPress
 
 == Changelog ==
+
+= 0.1.2 =
+* Security: reject malformed `post_id` input on the subscribe form
+  instead of coercing it via `absint()`.
+* Fix: stop showing a false "run composer install" admin notice when the
+  plugin is installed via a parent project's Composer (Bedrock and
+  similar).
 
 = 0.1.1 =
 * Template sync to 0.10.0 — adds a local commit-msg git hook that

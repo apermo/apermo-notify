@@ -33,7 +33,7 @@ use Apermo\Notify\Subscription\OptInFlow;
  */
 class Main {
 
-	public const VERSION = '0.1.1';
+	public const VERSION = '0.1.2';
 
 	/**
 	 * Holds the main plugin file path.

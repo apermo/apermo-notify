@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-25
+
 ### Security
 
 - `require_post_id()` in the subscribe form now rejects malformed input
