@@ -6,7 +6,11 @@ namespace Apermo\Notify\Tests\Unit;
 
 use Apermo\Notify\I18n;
 use Brain\Monkey;
+use Brain\Monkey\Actions;
 use Brain\Monkey\Functions;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  * hooks it wires.
  */
 final class I18nTest extends TestCase {
+
+	use MockeryPHPUnitIntegration;
 
 	/**
 	 * Sets up Brain Monkey.
@@ -41,21 +47,18 @@ final class I18nTest extends TestCase {
 	}
 
 	/**
-	 * Confirms register() hooks the registration on init.
+	 * Confirms register() hooks the project registration on init.
 	 *
 	 * @return void
 	 */
 	public function test_register_hooks_init(): void {
-		$hooks = [];
-		Functions\when( 'add_action' )->alias(
-			static function ( string $hook ) use ( &$hooks ): void {
-				$hooks[] = $hook;
-			},
-		);
+		$i18n = new I18n();
 
-		( new I18n() )->register();
+		Actions\expectAdded( 'init' )
+			->once()
+			->with( [ $i18n, 'add_project' ] );
 
-		$this->assertContains( 'init', $hooks );
+		$i18n->register();
 	}
 
 	/**
@@ -71,11 +74,16 @@ final class I18nTest extends TestCase {
 	}
 
 	/**
-	 * Confirms add_project() registers the project with the registry, wiring
-	 * the `translations_api` short-circuit for the apermo-notify slug.
+	 * Confirms add_project() wires the registry's translation filters for the
+	 * apermo-notify slug.
+	 *
+	 * The registry registers its filters only once per process, so this runs in
+	 * a separate process to stay independent of any other test's registration.
 	 *
 	 * @return void
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_adds_project_when_library_present(): void {
 		$filters = [];
 		Functions\when( 'has_action' )->justReturn( false );
