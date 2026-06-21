@@ -52,6 +52,12 @@ final class ManageSubscriptionsBlock {
 			true,
 		);
 
+		wp_set_script_translations(
+			self::EDITOR_SCRIPT_HANDLE,
+			'apermo-notify',
+			\dirname( Main::file() ) . '/languages',
+		);
+
 		register_block_type( \dirname( Main::file() ) . '/blocks/manage-subscriptions' );
 	}
 
