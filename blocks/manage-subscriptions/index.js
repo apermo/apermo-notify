@@ -21,7 +21,9 @@
 	var useBlockProps = wp.blockEditor.useBlockProps;
 	var ServerSideRender = wp.serverSideRender;
 	var el = wp.element.createElement;
-	var i18n = ( wp.i18n && wp.i18n.__ ) ? wp.i18n.__ : function ( s ) { return s; };
+	// Aliased to the literal `__` so `wp i18n make-pot` can extract the string
+	// below — its JS parser matches the callee name, not the binding origin.
+	var __ = ( wp.i18n && wp.i18n.__ ) ? wp.i18n.__ : function ( s ) { return s; };
 
 	registerBlockType( 'apermo-notify/manage-subscriptions', {
 		edit: function () {
@@ -42,7 +44,7 @@
 				el(
 					'em',
 					null,
-					i18n( 'Apermo Notify — Manage subscriptions (rendered on the front-end)', 'apermo-notify' ),
+					__( 'Apermo Notify — Manage subscriptions (rendered on the front-end)', 'apermo-notify' ),
 				),
 			);
 		},

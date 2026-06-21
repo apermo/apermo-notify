@@ -2,11 +2,12 @@
 /*
  * Plugin Name: Apermo Notify
  * Description: A WordPress plugin.
- * Version:     0.1.2
+ * Version:     0.1.3
  * Author:      Christoph Daum
  * Author URI:  https://apermo.de
  * License:     GPL-2.0-or-later
  * Text Domain: apermo-notify
+ * Domain Path: /languages
  * Requires at least: 7.0
  * Requires PHP: 8.1
  */

@@ -33,7 +33,7 @@ use Apermo\Notify\Subscription\OptInFlow;
  */
 class Main {
 
-	public const VERSION = '0.1.2';
+	public const VERSION = '0.1.3';
 
 	/**
 	 * Holds the main plugin file path.
@@ -100,6 +100,8 @@ class Main {
 		if ( is_admin() ) {
 			( new DeactivationFlow() )->register();
 		}
+
+		( new I18n() )->register();
 
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
