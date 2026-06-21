@@ -14,8 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `init`, so any install receives translations without a wp.org language
   pack. PHP strings load just-in-time on WordPress 7.0+.
 - Script translations for the editor block via
-  `wp_set_script_translations()`, so the block's JS strings and
-  `block.json` `title`/`description` pick up the delivered JSON.
+  `wp_set_script_translations()`, so the block's editor JS strings load
+  their translations. (`block.json` `title`/`description` are translated
+  server-side in PHP and load just-in-time.)
 - `composer make-pot` dev script that regenerates
   `languages/apermo-notify.pot`. The generated catalog is a build artifact
   and stays out of git.
