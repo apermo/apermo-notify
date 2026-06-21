@@ -7,6 +7,7 @@
  * Author URI:  https://apermo.de
  * License:     GPL-2.0-or-later
  * Text Domain: apermo-notify
+ * Domain Path: /languages
  * Requires at least: 7.0
  * Requires PHP: 8.1
  */
