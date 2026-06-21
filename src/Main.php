@@ -101,6 +101,8 @@ class Main {
 			( new DeactivationFlow() )->register();
 		}
 
+		( new I18n() )->register();
+
 		( new OptInFlow() )->register();
 		( new FormHandler() )->register();
 		( new ManagePage() )->register();
