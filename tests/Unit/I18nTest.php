@@ -77,8 +77,8 @@ final class I18nTest extends TestCase {
 	 * Confirms add_project() wires the registry's translation filters for the
 	 * apermo-notify slug.
 	 *
-	 * The registry registers its filters only once per process, so this runs in
-	 * a separate process to stay independent of any other test's registration.
+	 * add_project() mutates the library's static project registry, so this runs
+	 * in a separate process to keep that state out of sibling tests.
 	 *
 	 * @return void
 	 */
@@ -86,6 +86,8 @@ final class I18nTest extends TestCase {
 	#[PreserveGlobalState( false )]
 	public function test_adds_project_when_library_present(): void {
 		$filters = [];
+		// has_action/add_action stubs satisfy the registry's own internal cron
+		// wiring; only the add_filter calls are the subject of this test.
 		Functions\when( 'has_action' )->justReturn( false );
 		Functions\when( 'add_action' )->justReturn( true );
 		Functions\when( 'add_filter' )->alias(
