@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Self-hosted translation delivery via the Traduttore Registry: the plugin
+  registers itself against the GlotPress server at `translate.chrdm.de` on
+  `init`, so any install receives translations without a wp.org language
+  pack. PHP strings load just-in-time on WordPress 7.0+.
+- Script translations for the editor block via
+  `wp_set_script_translations()`, so the block's JS strings and
+  `block.json` `title`/`description` pick up the delivered JSON.
+- `composer make-pot` dev script that regenerates
+  `languages/apermo-notify.pot`. The generated catalog is a build artifact
+  and stays out of git.
+
 ### Changed
 
 - Bump GitHub Actions off the deprecated Node 20 runtime: `actions/checkout`
